@@ -23,7 +23,6 @@ class GameSearchDao(private val internalDao: Internal) {
             database.execSQL(
                 """
                 CREATE VIRTUAL TABLE fts_games USING FTS4(
-                  tokenize=unicode61 "remove_diacritics=1",
                   content="games",
                   title);
                 """

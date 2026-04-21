@@ -19,6 +19,7 @@
 
 package com.swordfish.lemuroid.lib.library
 
+import android.os.Build
 import androidx.annotation.StringRes
 import com.swordfish.lemuroid.lib.R
 import com.swordfish.lemuroid.lib.core.CoreVariable
@@ -1218,7 +1219,7 @@ data class GameSystem(
         private val byIdCache by lazy { mapOf(*SYSTEMS.map { it.id.dbname to it }.toTypedArray()) }
         private val byExtensionCache by lazy {
             val mutableMap = mutableMapOf<String, GameSystem>()
-            for (system in SYSTEMS) {
+            for (system in all()) {
                 for (extension in system.uniqueExtensions) {
                     mutableMap[extension.toLowerCase(Locale.US)] = system
                 }
@@ -1228,10 +1229,10 @@ data class GameSystem(
 
         fun findById(id: String): GameSystem = byIdCache.getValue(id)
 
-        fun all() = SYSTEMS
+        fun all() = SYSTEMS.filter(::isArchitectureSupported)
 
         fun getSupportedExtensions(): List<String> {
-            return SYSTEMS.flatMap { it.supportedExtensions }
+            return all().flatMap { it.supportedExtensions }
         }
 
         fun findSystemForCore(coreID: CoreID): List<GameSystem> {
@@ -1240,6 +1241,13 @@ data class GameSystem(
 
         fun findByUniqueFileExtension(fileExtension: String): GameSystem? =
             byExtensionCache[fileExtension.toLowerCase(Locale.US)]
+
+        private fun isArchitectureSupported(system: GameSystem): Boolean {
+            return system.systemCoreConfigs.any { coreConfig ->
+                val supportedOnlyArchitectures = coreConfig.supportedOnlyArchitectures ?: return@any true
+                Build.SUPPORTED_ABIS.any { it in supportedOnlyArchitectures }
+            }
+        }
 
         data class ScanOptions(
             val scanByFilename: Boolean = true,

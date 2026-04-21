@@ -2,6 +2,7 @@ package com.swordfish.lemuroid.app.mobile.feature.main
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.Html
 import android.view.Menu
@@ -25,7 +26,6 @@ import com.swordfish.lemuroid.app.mobile.feature.settings.AdvancedSettingsFragme
 import com.swordfish.lemuroid.app.mobile.feature.settings.BiosSettingsFragment
 import com.swordfish.lemuroid.app.mobile.feature.settings.CoresSelectionFragment
 import com.swordfish.lemuroid.app.mobile.feature.settings.GamepadSettingsFragment
-import com.swordfish.lemuroid.app.mobile.feature.settings.SaveSyncFragment
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsFragment
 import com.swordfish.lemuroid.app.mobile.feature.shortcuts.ShortcutsGenerator
 import com.swordfish.lemuroid.app.mobile.feature.systems.MetaSystemsFragment
@@ -35,7 +35,6 @@ import com.swordfish.lemuroid.app.shared.game.GameLauncher
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.main.BusyActivity
 import com.swordfish.lemuroid.app.shared.main.GameLaunchTaskHandler
-import com.swordfish.lemuroid.app.shared.savesync.SaveSyncWork
 import com.swordfish.lemuroid.app.shared.settings.GamePadPreferencesHelper
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.swordfish.lemuroid.common.coroutines.safeLaunch
@@ -45,7 +44,6 @@ import com.swordfish.lemuroid.lib.injection.PerActivity
 import com.swordfish.lemuroid.lib.injection.PerFragment
 import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
-import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import dagger.Provides
 import dagger.android.ContributesAndroidInjector
@@ -59,16 +57,16 @@ class MainActivity : RetrogradeAppCompatActivity(), BusyActivity {
     @Inject
     lateinit var gameLaunchTaskHandler: GameLaunchTaskHandler
 
-    @Inject
-    lateinit var saveSyncManager: SaveSyncManager
-
     private val reviewManager = ReviewManager()
     private var mainViewModel: MainViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.navigationBarColor = SurfaceColors.SURFACE_2.getColor(this)
-        window.statusBarColor = SurfaceColors.SURFACE_2.getColor(this)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            val surfaceColor = SurfaceColors.SURFACE_2.getColor(this)
+            window.navigationBarColor = surfaceColor
+            window.statusBarColor = surfaceColor
+        }
         setContentView(R.layout.activity_main)
         initializeActivity()
     }
@@ -118,13 +116,6 @@ class MainActivity : RetrogradeAppCompatActivity(), BusyActivity {
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        val isSupported = saveSyncManager.isSupported()
-        val isConfigured = saveSyncManager.isConfigured()
-        menu.findItem(R.id.menu_options_sync)?.isVisible = isSupported && isConfigured
-        return super.onPrepareOptionsMenu(menu)
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_mobile_settings, menu)
         return super.onCreateOptionsMenu(menu)
@@ -134,10 +125,6 @@ class MainActivity : RetrogradeAppCompatActivity(), BusyActivity {
         return when (item.itemId) {
             R.id.menu_options_help -> {
                 displayLemuroidHelp()
-                true
-            }
-            R.id.menu_options_sync -> {
-                SaveSyncWork.enqueueManualWork(this)
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -196,10 +183,6 @@ class MainActivity : RetrogradeAppCompatActivity(), BusyActivity {
         @PerFragment
         @ContributesAndroidInjector(modules = [AdvancedSettingsFragment.Module::class])
         abstract fun advancedSettingsFragment(): AdvancedSettingsFragment
-
-        @PerFragment
-        @ContributesAndroidInjector(modules = [SaveSyncFragment.Module::class])
-        abstract fun saveSyncFragment(): SaveSyncFragment
 
         @PerFragment
         @ContributesAndroidInjector(modules = [CoresSelectionFragment.Module::class])

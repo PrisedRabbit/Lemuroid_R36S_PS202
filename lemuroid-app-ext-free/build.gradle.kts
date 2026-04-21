@@ -14,6 +14,5 @@ dependencies {
     implementation(project(":retrograde-util"))
     implementation(project(":retrograde-app-shared"))
 
-    implementation(deps.libs.retrofit)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
 }

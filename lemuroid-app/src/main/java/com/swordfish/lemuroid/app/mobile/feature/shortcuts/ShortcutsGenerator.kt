@@ -10,24 +10,12 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import com.swordfish.lemuroid.app.shared.covers.CoverLoader
 import com.swordfish.lemuroid.app.shared.deeplink.DeepLink
-import com.swordfish.lemuroid.common.bitmap.cropToSquare
 import com.swordfish.lemuroid.common.bitmap.toBitmap
 import com.swordfish.lemuroid.lib.library.db.entity.Game
-import java.io.InputStream
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import retrofit2.Response
-import retrofit2.Retrofit
-import retrofit2.http.GET
-import retrofit2.http.Streaming
-import retrofit2.http.Url
 
 class ShortcutsGenerator(
-    private val appContext: Context,
-    retrofit: Retrofit
+    private val appContext: Context
 ) {
-
-    private val thumbnailsApi = retrofit.create(ThumbnailsApi::class.java)
 
     suspend fun pinShortcutForGame(game: Game) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
@@ -46,13 +34,7 @@ class ShortcutsGenerator(
         shortcutManager.requestPinShortcut(shortcutInfo, null)
     }
 
-    private suspend fun retrieveBitmap(game: Game): Bitmap = withContext(Dispatchers.IO) {
-        val result = runCatching {
-            val response = thumbnailsApi.downloadThumbnail(game.coverFrontUrl!!)
-            BitmapFactory.decodeStream(response.body()).cropToSquare()
-        }
-        result.getOrElse { retrieveFallbackBitmap(game) }
-    }
+    private fun retrieveBitmap(game: Game): Bitmap = retrieveFallbackBitmap(game)
 
     private fun retrieveFallbackBitmap(game: Game): Bitmap {
         val desiredIconSize = getDesiredIconSize()
@@ -70,11 +52,5 @@ class ShortcutsGenerator(
 
         val shortcutManager = appContext.getSystemService(ShortcutManager::class.java)!!
         return shortcutManager.isRequestPinShortcutSupported
-    }
-
-    interface ThumbnailsApi {
-        @GET
-        @Streaming
-        suspend fun downloadThumbnail(@Url url: String): Response<InputStream>
     }
 }

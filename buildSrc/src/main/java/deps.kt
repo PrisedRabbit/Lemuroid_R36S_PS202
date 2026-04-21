@@ -3,7 +3,7 @@ object deps {
     object android {
         const val targetSdkVersion  = 33
         const val compileSdkVersion = 33
-        const val minSdkVersion     = 23
+        const val minSdkVersion     = 19
         const val buildToolsVersion = "30.0.2"
     }
 
@@ -11,12 +11,11 @@ object deps {
         const val dagger          = "2.19"
         const val gms             = "17.0.0"
         const val kotlin          = "1.6.21"
-        const val okHttp          = "4.9.1"
+        const val okHttp          = "3.12.13"
         const val retrofit        = "2.9.0"
         const val work            = "2.7.1"
         const val navigation      = "2.3.5"
         const val lifecycle       = "2.5.1"
-        const val leanback        = "1.1.0-rc01"
         const val googleApiClient = "1.32.1"
         const val paging          = "3.1.1"
         const val room            = "2.4.2"
@@ -24,8 +23,6 @@ object deps {
         const val serialization   = "1.2.2"
         const val fragment        = "1.5.1"
         const val activity        = "1.5.1"
-        const val libretrodroid   = "0.10.0"
-        const val radialgamepad   = "2.0.0"
     }
 
     object libs {
@@ -35,12 +32,7 @@ object deps {
                 const val recyclerView = "androidx.recyclerview:recyclerview:1.2.1"
                 const val constraintLayout = "androidx.constraintlayout:constraintlayout:2.1.4"
             }
-            object leanback {
-                const val leanback = "androidx.leanback:leanback:${versions.leanback}"
-                const val leanbackPreference = "androidx.leanback:leanback-preference:${versions.leanback}"
-                const val leanbackPaging = "androidx.leanback:leanback-paging:1.1.0-alpha07"
-                const val tvProvider = "androidx.tvprovider:tvprovider:1.0.0"
-            }
+            const val multidex = "androidx.multidex:multidex:2.0.1"
             object ktx {
                 const val core = "androidx.core:core-ktx:1.8.0"
                 const val coreKtx = "androidx.core:core-ktx:1.8.0"
@@ -121,19 +113,16 @@ object deps {
 
         const val kotlinxCoroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
         const val ktlint                   = "com.github.shyiko:ktlint:0.29.0"
-        const val okio                     = "com.squareup.okio:okio:2.10.0"
+        const val okio                     = "com.squareup.okio:okio:1.17.5"
         const val okHttp3                  = "com.squareup.okhttp3:okhttp:${versions.okHttp}"
         const val coil                     = "io.coil-kt:coil:1.4.0"
         const val retrofit                 = "com.squareup.retrofit2:retrofit:${versions.retrofit}"
         const val flowPreferences          = "com.fredporciuncula:flow-preferences:1.8.0"
         const val timber                   = "com.jakewharton.timber:timber:5.0.1"
         const val material                 = "com.google.android.material:material:1.6.1"
-        const val multitouchGestures       = "com.dinuscxj:multitouchgesturedetector:1.0.0"
         const val guava                    = "com.google.guava:guava:30.1.1-android"
         const val harmony                  = "com.frybits.harmony:harmony:1.1.9"
         const val startup                  = "androidx.startup:startup-runtime:1.1.1"
-        const val radialgamepad            = "com.github.Swordfish90:RadialGamePad:${versions.radialgamepad}"
-        const val libretrodroid            = "com.github.Swordfish90:LibretroDroid:${versions.libretrodroid}"
     }
 
     object plugins {

@@ -123,7 +123,6 @@ enum class CoreID(
 
     interface AssetsManager {
         suspend fun retrieveAssetsIfNeeded(
-            coreUpdaterApi: CoreUpdater.CoreManagerApi,
             directoriesManager: DirectoriesManager,
             sharedPreferences: SharedPreferences
         )

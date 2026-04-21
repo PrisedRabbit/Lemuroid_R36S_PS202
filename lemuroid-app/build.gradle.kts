@@ -11,34 +11,9 @@ android {
         versionCode = 202
         versionName = "1.15.0" // Always remember to update Cores Tag!
         applicationId = "com.swordfish.lemuroid"
-    }
-
-    if (usePlayDynamicFeatures()) {
-        println("Building Google Play version. Bundling dynamic features.")
-        dynamicFeatures.addAll(
-            setOf(
-                ":lemuroid_core_desmume",
-                ":lemuroid_core_dosbox_pure",
-                ":lemuroid_core_fbneo",
-                ":lemuroid_core_fceumm",
-                ":lemuroid_core_gambatte",
-                ":lemuroid_core_genesis_plus_gx",
-                ":lemuroid_core_handy",
-                ":lemuroid_core_mame2003_plus",
-                ":lemuroid_core_mednafen_ngp",
-                ":lemuroid_core_mednafen_pce_fast",
-                ":lemuroid_core_mednafen_wswan",
-                ":lemuroid_core_melonds",
-                ":lemuroid_core_mgba",
-                ":lemuroid_core_mupen64plus_next_gles3",
-                ":lemuroid_core_pcsx_rearmed",
-                ":lemuroid_core_ppsspp",
-                ":lemuroid_core_prosystem",
-                ":lemuroid_core_snes9x",
-                ":lemuroid_core_stella",
-                ":lemuroid_core_citra"
-            )
-        )
+        ndk {
+            abiFilters += setOf("armeabi-v7a")
+        }
     }
 
     // Since some dependencies are closed source we make a completely free as in free speech variant.
@@ -50,17 +25,8 @@ android {
             dimension = "opensource"
         }
 
-        create("play") {
-            dimension = "opensource"
-        }
-
         // Include cores in the final apk
         create("bundle") {
-            dimension = "cores"
-        }
-
-        // Download cores on demand (from GooglePlay or GitHub)
-        create("dynamic") {
             dimension = "cores"
         }
     }
@@ -106,6 +72,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
 }
 
 dependencies {
@@ -117,7 +84,6 @@ dependencies {
     "bundleImplementation"(project(":bundled-cores"))
 
     "freeImplementation"(project(":lemuroid-app-ext-free"))
-    "playImplementation"(project(":lemuroid-app-ext-play"))
 
     implementation(deps.libs.androidx.navigation.navigationFragment)
     implementation(deps.libs.androidx.navigation.navigationUi)
@@ -127,6 +93,7 @@ dependencies {
     implementation(deps.libs.androidx.activity.activity)
     implementation(deps.libs.androidx.activity.activityKtx)
     implementation(deps.libs.androidx.appcompat.appcompat)
+    implementation(deps.libs.androidx.multidex)
     implementation(deps.libs.androidx.preferences.preferencesKtx)
     implementation(deps.libs.arch.work.runtime)
     implementation(deps.libs.arch.work.runtimeKtx)
@@ -138,10 +105,6 @@ dependencies {
     kapt(deps.libs.epoxy.processor)
     kapt(deps.libs.androidx.lifecycle.processor)
 
-    implementation(deps.libs.androidx.leanback.leanback)
-    implementation(deps.libs.androidx.leanback.leanbackPreference)
-    implementation(deps.libs.androidx.leanback.leanbackPaging)
-
     implementation(deps.libs.androidx.appcompat.recyclerView)
     implementation(deps.libs.androidx.paging.common)
     implementation(deps.libs.androidx.paging.runtime)
@@ -152,28 +115,19 @@ dependencies {
     implementation(deps.libs.dagger.android.support)
     implementation(deps.libs.dagger.core)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
-    implementation(deps.libs.okHttp3)
-    implementation(deps.libs.okio)
-    implementation(deps.libs.retrofit)
     implementation(deps.libs.flowPreferences)
     implementation(deps.libs.guava)
     implementation(deps.libs.androidx.documentfile)
-    implementation(deps.libs.androidx.leanback.tvProvider)
     implementation(deps.libs.harmony)
     implementation(deps.libs.startup)
     implementation(deps.libs.kotlin.serialization)
     implementation(deps.libs.kotlin.serializationJson)
 
-    implementation(deps.libs.libretrodroid)
+    implementation(project(":libretrodroid"))
 
     // Uncomment this when using a local aar file.
     //implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
 
     kapt(deps.libs.dagger.android.processor)
     kapt(deps.libs.dagger.compiler)
-}
-
-fun usePlayDynamicFeatures(): Boolean {
-    val task = gradle.startParameter.taskRequests.toString()
-    return task.contains("Play") && task.contains("Dynamic")
 }

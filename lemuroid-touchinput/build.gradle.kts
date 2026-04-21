@@ -19,7 +19,7 @@ dependencies {
     implementation(deps.libs.material)
     implementation(deps.libs.androidx.preferences.preferencesKtx)
 
-    api(deps.libs.radialgamepad)
+    api(project(":radialgamepad"))
 
     implementation(kotlin(deps.libs.kotlin.stdlib))
 

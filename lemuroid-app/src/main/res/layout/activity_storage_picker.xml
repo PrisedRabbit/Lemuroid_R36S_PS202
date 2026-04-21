@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:descendantFocusability="afterDescendants"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/storage_picker_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+
+    <ListView
+        android:id="@+id/storage_picker_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:choiceMode="singleChoice"
+        android:drawSelectorOnTop="false"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:nextFocusDown="@id/storage_picker_select" />
+
+    <TextView
+        android:id="@+id/storage_picker_empty"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/storage_picker_empty_directory"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/storage_picker_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:descendantFocusability="afterDescendants"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:paddingTop="12dp">
+
+        <Button
+            android:id="@+id/storage_picker_choose_storage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:nextFocusDown="@id/storage_picker_select"
+            android:nextFocusLeft="@id/storage_picker_cancel"
+            android:nextFocusRight="@id/storage_picker_select"
+            android:nextFocusUp="@id/storage_picker_list"
+            android:text="@string/tv_folder_storage_title" />
+
+        <Button
+            android:id="@+id/storage_picker_select"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:nextFocusLeft="@id/storage_picker_choose_storage"
+            android:nextFocusRight="@id/storage_picker_cancel"
+            android:nextFocusUp="@id/storage_picker_list"
+            android:text="@string/tv_folder_picker_action_choose" />
+
+        <Button
+            android:id="@+id/storage_picker_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:focusable="true"
+            android:nextFocusLeft="@id/storage_picker_select"
+            android:nextFocusRight="@id/storage_picker_choose_storage"
+            android:nextFocusUp="@id/storage_picker_list"
+            android:text="@string/cancel" />
+    </LinearLayout>
+
+</LinearLayout>

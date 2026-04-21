@@ -12,8 +12,6 @@ import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.ImmersiveActivity
 import com.swordfish.lemuroid.app.shared.library.PendingOperationsMonitor
 import com.swordfish.lemuroid.app.shared.main.GameLaunchTaskHandler
-import com.swordfish.lemuroid.app.tv.channel.ChannelUpdateWork
-import com.swordfish.lemuroid.app.tv.shared.TVHelper
 import com.swordfish.lemuroid.app.utils.android.displayErrorDialog
 import com.swordfish.lemuroid.common.animationDuration
 import com.swordfish.lemuroid.common.coroutines.launchOnState
@@ -97,7 +95,7 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
             this,
             game,
             true,
-            TVHelper.isTV(applicationContext)
+            false
         )
     }
 
@@ -121,12 +119,7 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
 
         when (requestCode) {
             BaseGameActivity.REQUEST_PLAY_GAME -> {
-                val isLeanback = data?.extras?.getBoolean(BaseGameActivity.PLAY_GAME_RESULT_LEANBACK) == true
-
                 GlobalScope.safeLaunch {
-                    if (isLeanback) {
-                        ChannelUpdateWork.enqueue(applicationContext)
-                    }
                     gameLaunchTaskHandler.handleGameFinish(false, this@ExternalGameLauncherActivity, resultCode, data)
                     finish()
                 }

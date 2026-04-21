@@ -2,6 +2,7 @@ package com.swordfish.lemuroid.app
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.multidex.MultiDex
 import androidx.startup.AppInitializer
 import androidx.work.ListenableWorker
 import com.google.android.material.color.DynamicColors
@@ -37,6 +38,7 @@ class LemuroidApplication : DaggerApplication(), HasWorkerInjector {
 
     override fun attachBaseContext(base: Context) {
         super.attachBaseContext(base)
+        MultiDex.install(this)
         ContextHandler.attachBaseContext(base)
     }
 

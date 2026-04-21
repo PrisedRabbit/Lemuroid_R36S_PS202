@@ -22,7 +22,6 @@ dependencies {
     implementation(deps.libs.arch.work.runtime)
     implementation(deps.libs.arch.work.runtimeKtx)
     implementation(deps.libs.androidx.appcompat.appcompat)
-    implementation(deps.libs.androidx.leanback.leanbackPreference)
     implementation(deps.libs.androidx.ktx.collection)
     implementation(deps.libs.androidx.ktx.core)
     implementation(deps.libs.androidx.ktx.coreKtx)
@@ -37,6 +36,7 @@ dependencies {
     implementation(deps.libs.androidx.room.ktx)
     implementation(deps.libs.androidx.room.paging)
     implementation(deps.libs.androidx.documentfile)
+    implementation(deps.libs.androidx.preferences.preferencesKtx)
     implementation(deps.libs.dagger.android.core)
     implementation(deps.libs.dagger.android.support)
     implementation(deps.libs.okHttp3)
@@ -45,7 +45,6 @@ dependencies {
     implementation(deps.libs.kotlin.serialization)
     implementation(deps.libs.kotlin.serializationJson)
     implementation(deps.libs.harmony)
-    implementation(deps.libs.multitouchGestures)
     implementation(deps.libs.material)
     implementation(deps.libs.kotlinxCoroutinesAndroid)
 

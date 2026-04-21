@@ -162,6 +162,11 @@ class GameActivity : BaseGameActivity() {
     }
 
     private fun initializeInsetsState() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            insetsState.value = Rect(0, 0, 0, 0)
+            return
+        }
+
         mainContainerLayout.setOnApplyWindowInsetsListener { _, windowInsets ->
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val insets = windowInsets.getInsetsIgnoringVisibility(

@@ -3,43 +3,38 @@ package com.swordfish.lemuroid.app.mobile.feature.settings
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.fredporciuncula.flow.preferences.FlowSharedPreferences
-import com.swordfish.lemuroid.R
 import com.swordfish.lemuroid.app.shared.library.PendingOperationsMonitor
-import kotlinx.coroutines.Dispatchers
+import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
+import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     context: Context,
-    directoryPreference: String,
-    sharedPreferences: FlowSharedPreferences
+    directoriesManager: DirectoriesManager
 ) : ViewModel() {
 
     class Factory(
-        private val context: Context,
-        private val sharedPreferences: FlowSharedPreferences
+        private val context: Context
     ) : ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            val directoryPreference = context.getString(R.string.pref_key_extenral_folder)
-            return SettingsViewModel(context, directoryPreference, sharedPreferences) as T
+            return SettingsViewModel(context, DirectoriesManager(context.applicationContext)) as T
         }
     }
 
-    val currentFolder = MutableStateFlow("")
+    private val legacyPreferences = SharedPreferencesHelper.getLegacySharedPreferences(context)
+    private val currentFolderKey = context.getString(com.swordfish.lemuroid.lib.R.string.pref_key_legacy_external_folder)
+    private val fallbackFolder = directoriesManager.getInternalRomsDirectory().absolutePath
+
+    val currentFolder = MutableStateFlow(
+        legacyPreferences.getString(currentFolderKey, null) ?: fallbackFolder
+    )
 
     val indexingInProgress = PendingOperationsMonitor(context).anyLibraryOperationInProgress()
 
     val directoryScanInProgress = PendingOperationsMonitor(context).isDirectoryScanInProgress()
 
-    init {
-        viewModelScope.launch {
-            sharedPreferences.getString(directoryPreference).asFlow()
-                .flowOn(Dispatchers.IO)
-                .collect { currentFolder.value = it }
-        }
+    fun refreshCurrentFolder() {
+        currentFolder.value = legacyPreferences.getString(currentFolderKey, null) ?: fallbackFolder
     }
 }

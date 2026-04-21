@@ -16,7 +16,6 @@ import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.input.InputKey
 import com.swordfish.lemuroid.app.shared.input.RetroKey
 import com.swordfish.lemuroid.app.shared.input.lemuroiddevice.getLemuroidInputDevice
-import com.swordfish.lemuroid.app.tv.input.TVGamePadBindingActivity
 import java.util.Locale
 
 class GamePadPreferencesHelper(
@@ -164,13 +163,7 @@ class GamePadPreferencesHelper(
     }
 
     private fun displayChangeDialog(context: Context, inputDevice: InputDevice, retroKey: Int) {
-        val activity = if (isLeanback) {
-            TVGamePadBindingActivity::class.java
-        } else {
-            GamePadBindingActivity::class.java
-        }
-
-        val intent = Intent(context, activity).apply {
+        val intent = Intent(context, GamePadBindingActivity::class.java).apply {
             putExtra(InputBindingUpdater.REQUEST_DEVICE, inputDevice)
             putExtra(InputBindingUpdater.REQUEST_RETRO_KEY, retroKey)
         }

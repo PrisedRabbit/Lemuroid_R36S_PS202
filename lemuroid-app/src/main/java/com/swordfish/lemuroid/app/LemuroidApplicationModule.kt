@@ -38,10 +38,8 @@ import com.swordfish.lemuroid.app.shared.settings.BiosPreferences
 import com.swordfish.lemuroid.app.shared.settings.ControllerConfigsManager
 import com.swordfish.lemuroid.app.shared.settings.CoresSelectionPreferences
 import com.swordfish.lemuroid.app.shared.settings.StorageFrameworkPickerLauncher
-import com.swordfish.lemuroid.app.tv.channel.ChannelHandler
 import com.swordfish.lemuroid.ext.feature.core.CoreUpdaterImpl
 import com.swordfish.lemuroid.ext.feature.review.ReviewManager
-import com.swordfish.lemuroid.ext.feature.savesync.SaveSyncManagerImpl
 import com.swordfish.lemuroid.lib.bios.BiosManager
 import com.swordfish.lemuroid.lib.core.CoreUpdater
 import com.swordfish.lemuroid.lib.core.CoreVariablesManager
@@ -59,7 +57,6 @@ import com.swordfish.lemuroid.lib.saves.SavesCoherencyEngine
 import com.swordfish.lemuroid.lib.saves.SavesManager
 import com.swordfish.lemuroid.lib.saves.StatesManager
 import com.swordfish.lemuroid.lib.saves.StatesPreviewManager
-import com.swordfish.lemuroid.lib.savesync.SaveSyncManager
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import com.swordfish.lemuroid.lib.storage.StorageProvider
 import com.swordfish.lemuroid.lib.storage.StorageProviderRegistry
@@ -73,23 +70,12 @@ import dagger.Module
 import dagger.Provides
 import dagger.android.ContributesAndroidInjector
 import dagger.multibindings.IntoSet
-import java.io.InputStream
-import java.lang.reflect.Type
-import java.util.concurrent.TimeUnit
-import java.util.zip.ZipInputStream
-import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
-import retrofit2.Converter
-import retrofit2.Retrofit
 
 @Module
 abstract class LemuroidApplicationModule {
 
     @Binds
     abstract fun context(app: LemuroidApplication): Context
-
-    @Binds
-    abstract fun saveSyncManager(saveSyncManagerImpl: SaveSyncManagerImpl): SaveSyncManager
 
     @PerActivity
     @ContributesAndroidInjector(modules = [MainActivity.Module::class])
@@ -177,42 +163,6 @@ abstract class LemuroidApplicationModule {
         @Provides
         @PerApp
         @JvmStatic
-        fun okHttpClient(): OkHttpClient = OkHttpClient.Builder()
-            .connectTimeout(1, TimeUnit.MINUTES)
-            .readTimeout(1, TimeUnit.MINUTES)
-            .build()
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun retrofit(): Retrofit = Retrofit.Builder()
-            .baseUrl("https://example.com")
-            .addConverterFactory(
-                object : Converter.Factory() {
-                    override fun responseBodyConverter(
-                        type: Type?,
-                        annotations: Array<out Annotation>?,
-                        retrofit: Retrofit?
-                    ): Converter<ResponseBody, *>? {
-                        if (type == ZipInputStream::class.java) {
-                            return Converter<ResponseBody, ZipInputStream> { responseBody ->
-                                ZipInputStream(responseBody.byteStream())
-                            }
-                        }
-                        if (type == InputStream::class.java) {
-                            return Converter<ResponseBody, InputStream> { responseBody ->
-                                responseBody.byteStream()
-                            }
-                        }
-                        return null
-                    }
-                }
-            )
-            .build()
-
-        @Provides
-        @PerApp
-        @JvmStatic
         fun directoriesManager(context: Context) = DirectoriesManager(context)
 
         @Provides
@@ -234,10 +184,8 @@ abstract class LemuroidApplicationModule {
         @Provides
         @PerApp
         @JvmStatic
-        fun coreManager(
-            directoriesManager: DirectoriesManager,
-            retrofit: Retrofit
-        ): CoreUpdater = CoreUpdaterImpl(directoriesManager, retrofit)
+        fun coreManager(directoriesManager: DirectoriesManager): CoreUpdater =
+            CoreUpdaterImpl(directoriesManager)
 
         @Provides
         @PerApp
@@ -304,32 +252,13 @@ abstract class LemuroidApplicationModule {
         @Provides
         @PerApp
         @JvmStatic
-        fun saveSyncManagerImpl(
-            context: Context,
-            directoriesManager: DirectoriesManager
-        ) = SaveSyncManagerImpl(context, directoriesManager)
-
-        @Provides
-        @PerApp
-        @JvmStatic
         fun postGameHandler(retrogradeDatabase: RetrogradeDatabase) =
             GameLaunchTaskHandler(ReviewManager(), retrogradeDatabase)
 
         @Provides
         @PerApp
         @JvmStatic
-        fun shortcutsGenerator(context: Context, retrofit: Retrofit) =
-            ShortcutsGenerator(context, retrofit)
-
-        @Provides
-        @PerApp
-        @JvmStatic
-        fun channelHandler(
-            context: Context,
-            retrogradeDatabase: RetrogradeDatabase,
-            retrofit: Retrofit
-        ) =
-            ChannelHandler(context, retrogradeDatabase, retrofit)
+        fun shortcutsGenerator(context: Context) = ShortcutsGenerator(context)
 
         @Provides
         @PerApp

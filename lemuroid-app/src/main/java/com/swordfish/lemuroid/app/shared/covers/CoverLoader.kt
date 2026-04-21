@@ -2,34 +2,19 @@ package com.swordfish.lemuroid.app.shared.covers
 
 import android.content.Context
 import android.widget.ImageView
-import coil.ImageLoader
 import coil.load
-import coil.util.CoilUtils
 import com.swordfish.lemuroid.common.drawable.TextDrawable
 import com.swordfish.lemuroid.common.graphics.ColorUtils
 import com.swordfish.lemuroid.lib.library.db.entity.Game
-import okhttp3.OkHttpClient
 
 class CoverLoader(applicationContext: Context) {
-
-    private val imageLoader = ImageLoader.Builder(applicationContext)
-        .crossfade(true)
-        .okHttpClient {
-            OkHttpClient.Builder()
-                .cache(CoilUtils.createDefaultCache(applicationContext))
-                .addNetworkInterceptor(ThrottleFailedThumbnailsInterceptor)
-                .build()
-        }
-        .build()
+    @Suppress("UNUSED_PARAMETER")
+    private val context = applicationContext
 
     fun loadCover(game: Game, imageView: ImageView?) {
         if (imageView == null) return
 
-        imageView.load(game.coverFrontUrl, imageLoader) {
-            val fallbackDrawable = getFallbackDrawable(game)
-            fallback(fallbackDrawable)
-            error(fallbackDrawable)
-        }
+        imageView.load(getFallbackDrawable(game))
     }
 
     fun cancelRequest(imageView: ImageView) {
