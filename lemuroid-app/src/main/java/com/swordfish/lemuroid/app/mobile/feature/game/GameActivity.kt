@@ -43,6 +43,7 @@ import com.swordfish.lemuroid.app.shared.game.BaseGameActivity
 import com.swordfish.lemuroid.common.coroutines.batchWithTime
 import com.swordfish.lemuroid.common.coroutines.launchOnState
 import com.swordfish.lemuroid.common.coroutines.safeCollect
+import com.swordfish.lemuroid.common.displayToast
 import com.swordfish.lemuroid.common.graphics.GraphicsUtils
 import com.swordfish.lemuroid.common.kotlin.NTuple2
 import com.swordfish.lemuroid.common.kotlin.NTuple3
@@ -537,54 +538,67 @@ class GameActivity : BaseGameActivity() {
     }
 
     private suspend fun displayCustomizationOptions() {
-        findViewById<View>(R.id.editcontrolsdarkening).isVisible = true
+        if (!isTouchControllerVisible().first()) {
+            displayToast(R.string.game_edit_touch_controls_error_not_visible)
+            return
+        }
 
-        val customizer = TouchControllerCustomizer()
+        val darkeningView = findViewById<View>(R.id.editcontrolsdarkening)
+        darkeningView.isVisible = true
 
-        val insets = insetsState
-            .filterNotNull()
-            .first()
+        try {
+            val customizer = TouchControllerCustomizer()
 
-        val touchControllerConfig = getTouchControllerType()
-            .first()
+            val insets = insetsState
+                .filterNotNull()
+                .first()
 
-        val padSettings = touchControllerSettingsState.filterNotNull()
-            .first()
+            val touchControllerConfig = getTouchControllerType()
+                .first()
 
-        val initialSettings = TouchControllerCustomizer.Settings(
-            padSettings.scale,
-            padSettings.rotation,
-            padSettings.marginX,
-            padSettings.marginY
-        )
-
-        val finalSettings = customizer.displayCustomizationPopup(
-            this@GameActivity,
-            layoutInflater,
-            mainContainerLayout,
-            insets,
-            initialSettings
-        )
-            .takeWhile { it !is TouchControllerCustomizer.Event.Close }
-            .scan(padSettings) { current, it ->
-                when (it) {
-                    is TouchControllerCustomizer.Event.Scale -> {
-                        current.copy(scale = it.value)
-                    }
-                    is TouchControllerCustomizer.Event.Rotation -> {
-                        current.copy(rotation = it.value)
-                    }
-                    is TouchControllerCustomizer.Event.Margins -> {
-                        current.copy(marginX = it.x, marginY = it.y)
-                    }
-                    else -> current
-                }
+            val padSettings = touchControllerSettingsState.value ?: getTouchControllerSettingsManager(
+                touchControllerConfig,
+                orientationState.value
+            ).retrieveSettings().also {
+                touchControllerSettingsState.value = it
             }
-            .onEach { touchControllerSettingsState.value = it }
-            .last()
 
-        storeTouchControllerSettings(touchControllerConfig, orientationState.value, finalSettings)
-        findViewById<View>(R.id.editcontrolsdarkening).isVisible = false
+            val initialSettings = TouchControllerCustomizer.Settings(
+                padSettings.scale,
+                padSettings.rotation,
+                padSettings.marginX,
+                padSettings.marginY
+            )
+
+            val finalSettings = customizer.displayCustomizationPopup(
+                this@GameActivity,
+                layoutInflater,
+                mainContainerLayout,
+                insets,
+                initialSettings
+            )
+                .takeWhile { it !is TouchControllerCustomizer.Event.Close }
+                .scan(padSettings) { current, it ->
+                    when (it) {
+                        is TouchControllerCustomizer.Event.Scale -> {
+                            current.copy(scale = it.value)
+                        }
+                        is TouchControllerCustomizer.Event.Rotation -> {
+                            current.copy(rotation = it.value)
+                        }
+                        is TouchControllerCustomizer.Event.Margins -> {
+                            current.copy(marginX = it.x, marginY = it.y)
+                        }
+                        else -> current
+                    }
+                }
+                .onEach { touchControllerSettingsState.value = it }
+                .last()
+
+            storeTouchControllerSettings(touchControllerConfig, orientationState.value, finalSettings)
+        } finally {
+            darkeningView.isVisible = false
+        }
     }
 
     inner class LayoutHandler {

@@ -45,6 +45,8 @@ class GameMenuFragment : KitKatPreferenceFragment() {
             fastForwardEnabled,
             fastForwardSupported
         )
+        preferenceScreen.findPreference<Preference>("pref_game_edit_touch_controls")?.isVisible =
+            requireContext().packageManager.hasSystemFeature("android.hardware.touchscreen")
         GameMenuHelper.bindMainMenuActions(activity, preferenceScreen)
 
         val systemCoreConfig = activity?.intent?.getSerializableExtra(

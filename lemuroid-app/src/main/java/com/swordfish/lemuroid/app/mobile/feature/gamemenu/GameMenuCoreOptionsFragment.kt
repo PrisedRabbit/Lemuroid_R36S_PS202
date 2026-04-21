@@ -49,12 +49,14 @@ class GameMenuCoreOptionsFragment : KitKatPreferenceFragment() {
 
         val extras = activity?.intent?.extras
 
-        val coreOptions = extras?.getSerializable(GameMenuContract.EXTRA_CORE_OPTIONS) as Array<LemuroidCoreOption>?
+        val coreOptions = (extras?.getSerializable(GameMenuContract.EXTRA_CORE_OPTIONS) as? Array<*>)
+            ?.filterIsInstance<LemuroidCoreOption>()
             ?: throw InvalidParameterException("Missing EXTRA_CORE_OPTIONS")
 
-        val advancedCoreOptions = extras?.getSerializable(
-            GameMenuContract.EXTRA_ADVANCED_CORE_OPTIONS
-        ) as Array<LemuroidCoreOption>?
+        val advancedCoreOptions = (
+            extras?.getSerializable(GameMenuContract.EXTRA_ADVANCED_CORE_OPTIONS) as? Array<*>
+            )
+            ?.filterIsInstance<LemuroidCoreOption>()
             ?: throw InvalidParameterException("Missing EXTRA_ADVANCED_CORE_OPTIONS")
 
         val game = extras?.getSerializable(GameMenuContract.EXTRA_GAME) as Game?
@@ -66,8 +68,8 @@ class GameMenuCoreOptionsFragment : KitKatPreferenceFragment() {
         CoreOptionsPreferenceHelper.addPreferences(
             preferenceScreen,
             game.systemId,
-            coreOptions.toList(),
-            advancedCoreOptions.toList()
+            coreOptions,
+            advancedCoreOptions
         )
 
         CoreOptionsPreferenceHelper.addControllers(
