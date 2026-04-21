@@ -7,8 +7,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.library.LibraryIndexScheduler
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.swordfish.lemuroid.common.coroutines.launchOnState
@@ -17,7 +17,7 @@ import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class SettingsFragment : PreferenceFragmentCompat() {
+class SettingsFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var settingsInteractor: SettingsInteractor

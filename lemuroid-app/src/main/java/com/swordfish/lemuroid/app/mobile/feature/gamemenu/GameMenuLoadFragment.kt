@@ -5,8 +5,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.GameMenuContract
 import com.swordfish.lemuroid.app.shared.gamemenu.GameMenuHelper
 import com.swordfish.lemuroid.common.coroutines.launchOnState
@@ -19,7 +19,7 @@ import dagger.android.support.AndroidSupportInjection
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
-class GameMenuLoadFragment : PreferenceFragmentCompat() {
+class GameMenuLoadFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var statesManager: StatesManager

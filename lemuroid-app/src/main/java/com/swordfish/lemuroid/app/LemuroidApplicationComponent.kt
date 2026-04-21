@@ -19,11 +19,11 @@
 
 package com.swordfish.lemuroid.app
 
-import com.swordfish.lemuroid.app.shared.library.CoreUpdateWork
-import com.swordfish.lemuroid.app.shared.library.LibraryIndexWork
 import com.swordfish.lemuroid.app.shared.storage.cache.CacheCleanerWork
 import com.swordfish.lemuroid.lib.injection.AndroidWorkerInjectionModule
 import com.swordfish.lemuroid.lib.injection.PerApp
+import com.swordfish.lemuroid.lib.library.LemuroidLibrary
+import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import dagger.Component
 import dagger.android.AndroidInjector
 import dagger.android.support.AndroidSupportInjectionModule
@@ -33,14 +33,18 @@ import dagger.android.support.AndroidSupportInjectionModule
         AndroidSupportInjectionModule::class,
         AndroidWorkerInjectionModule::class,
         LemuroidApplicationModule::class,
-        LibraryIndexWork.Module::class,
-        CoreUpdateWork.Module::class,
         CacheCleanerWork.Module::class
     ]
 )
 @PerApp
 interface LemuroidApplicationComponent : AndroidInjector<LemuroidApplication> {
 
+    fun lemuroidLibrary(): LemuroidLibrary
+
+    fun retrogradeDatabase(): RetrogradeDatabase
+
     @Component.Builder
-    abstract class Builder : AndroidInjector.Builder<LemuroidApplication>()
+    abstract class Builder : AndroidInjector.Builder<LemuroidApplication>() {
+        abstract override fun build(): LemuroidApplicationComponent
+    }
 }

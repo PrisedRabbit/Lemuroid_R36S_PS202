@@ -22,6 +22,48 @@ import kotlin.math.roundToInt
 
 object GameMenuHelper {
 
+    fun bindMainMenuActions(activity: Activity?, screen: PreferenceScreen) {
+        screen.findPreference<Preference>("pref_game_quit")?.setOnPreferenceClickListener {
+            val resultIntent = Intent().apply {
+                putExtra(GameMenuContract.RESULT_QUIT, true)
+            }
+            setResultAndFinish(activity, resultIntent)
+            true
+        }
+
+        screen.findPreference<Preference>("pref_game_reset")?.setOnPreferenceClickListener {
+            val resultIntent = Intent().apply {
+                putExtra(GameMenuContract.RESULT_RESET, true)
+            }
+            setResultAndFinish(activity, resultIntent)
+            true
+        }
+
+        screen.findPreference<Preference>("pref_game_edit_touch_controls")?.setOnPreferenceClickListener {
+            val resultIntent = Intent().apply {
+                putExtra(GameMenuContract.RESULT_EDIT_TOUCH_CONTROLS, true)
+            }
+            setResultAndFinish(activity, resultIntent)
+            true
+        }
+
+        screen.findPreference<SwitchPreference>(MUTE)?.setOnPreferenceChangeListener { _, newValue ->
+            val resultIntent = Intent().apply {
+                putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, !(newValue as Boolean))
+            }
+            setResultAndFinish(activity, resultIntent)
+            false
+        }
+
+        screen.findPreference<SwitchPreference>(FAST_FORWARD)?.setOnPreferenceChangeListener { _, newValue ->
+            val resultIntent = Intent().apply {
+                putExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD, newValue as Boolean)
+            }
+            setResultAndFinish(activity, resultIntent)
+            false
+        }
+    }
+
     fun setupAudioOption(screen: PreferenceScreen, audioEnabled: Boolean) {
         val preference = screen.findPreference<SwitchPreference>(MUTE)
         preference?.isChecked = !audioEnabled

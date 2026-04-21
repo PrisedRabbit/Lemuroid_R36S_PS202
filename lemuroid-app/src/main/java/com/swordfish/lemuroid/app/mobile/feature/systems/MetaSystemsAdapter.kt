@@ -31,6 +31,9 @@ class MetaSystemViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
         )
         coverView?.setImageResource(metaSystemInfo.metaSystem.imageResId)
         itemView.setOnClickListener { onSystemClick(metaSystemInfo.metaSystem) }
+        itemView.setOnFocusChangeListener { view, hasFocus ->
+            view.isActivated = hasFocus
+        }
     }
 }
 

@@ -7,8 +7,8 @@ import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.app.shared.settings.GamePadPreferencesHelper
 import com.swordfish.lemuroid.common.coroutines.launchOnState
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class GamepadSettingsFragment : PreferenceFragmentCompat() {
+class GamepadSettingsFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var gamePadPreferencesHelper: GamePadPreferencesHelper

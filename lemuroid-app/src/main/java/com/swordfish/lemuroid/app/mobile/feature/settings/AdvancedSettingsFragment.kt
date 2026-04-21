@@ -4,15 +4,15 @@ import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.settings.AdvancedSettingsPreferences
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class AdvancedSettingsFragment : PreferenceFragmentCompat() {
+class AdvancedSettingsFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var settingsInteractor: SettingsInteractor

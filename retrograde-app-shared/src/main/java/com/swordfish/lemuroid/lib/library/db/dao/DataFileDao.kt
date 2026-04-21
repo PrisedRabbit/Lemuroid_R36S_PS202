@@ -15,6 +15,9 @@ interface DataFileDao {
     @Query("SELECT * FROM datafiles WHERE lastIndexedAt < :lastIndexedAt")
     fun selectByLastIndexedAtLessThan(lastIndexedAt: Long): List<DataFile>
 
+    @Query("DELETE FROM datafiles WHERE fileUri LIKE :uriPrefix")
+    suspend fun deleteByUriPrefix(uriPrefix: String)
+
     @Insert
     fun insert(dataFile: DataFile)
 

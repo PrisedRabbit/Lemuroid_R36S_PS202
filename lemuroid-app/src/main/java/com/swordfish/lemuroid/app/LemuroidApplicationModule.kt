@@ -61,7 +61,6 @@ import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import com.swordfish.lemuroid.lib.storage.StorageProvider
 import com.swordfish.lemuroid.lib.storage.StorageProviderRegistry
 import com.swordfish.lemuroid.lib.storage.local.LocalStorageProvider
-import com.swordfish.lemuroid.lib.storage.local.StorageAccessFrameworkProvider
 import com.swordfish.lemuroid.metadata.libretrodb.LibretroDBMetadataProvider
 import com.swordfish.lemuroid.metadata.libretrodb.db.LibretroDBManager
 import dagger.Binds
@@ -123,13 +122,6 @@ abstract class LemuroidApplicationModule {
         @JvmStatic
         fun gameMetadataProvider(libretroDBManager: LibretroDBManager): GameMetadataProvider =
             LibretroDBMetadataProvider(libretroDBManager)
-
-        @Provides
-        @PerApp
-        @IntoSet
-        @JvmStatic
-        fun localSAFStorageProvider(context: Context): StorageProvider =
-            StorageAccessFrameworkProvider(context)
 
         @Provides
         @PerApp

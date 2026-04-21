@@ -37,6 +37,9 @@ class GameViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
 
         itemView.setOnClickListener { gameInteractor.onGamePlay(game) }
         itemView.setOnCreateContextMenuListener(GameContextMenuListener(gameInteractor, game))
+        itemView.setOnFocusChangeListener { view, hasFocus ->
+            view.isActivated = hasFocus
+        }
 
         favoriteToggle?.setOnCheckedChangeListener { _, isChecked ->
             gameInteractor.onFavoriteToggle(game, isChecked)
@@ -49,6 +52,8 @@ class GameViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
             this.setImageDrawable(null)
         }
         itemView.setOnClickListener(null)
+        itemView.onFocusChangeListener = null
+        itemView.isActivated = false
         favoriteToggle?.setOnCheckedChangeListener(null)
         itemView.setOnCreateContextMenuListener(null)
     }

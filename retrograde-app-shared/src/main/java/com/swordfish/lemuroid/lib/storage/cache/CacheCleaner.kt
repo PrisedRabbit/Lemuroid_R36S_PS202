@@ -8,7 +8,6 @@ import android.text.format.Formatter
 import com.swordfish.lemuroid.common.kotlin.gigaBytes
 import com.swordfish.lemuroid.common.kotlin.megaBytes
 import com.swordfish.lemuroid.lib.storage.local.LocalStorageProvider
-import com.swordfish.lemuroid.lib.storage.local.StorageAccessFrameworkProvider
 import java.io.File
 import kotlin.math.abs
 import kotlin.math.roundToLong
@@ -20,6 +19,7 @@ object CacheCleaner {
 
     private val MIN_CACHE_LIMIT = 64L.megaBytes()
     private val MAX_CACHE_LIMIT = 10L.gigaBytes()
+    private const val LEGACY_SAF_CACHE_SUBFOLDER = "storage-framework-games"
 
     fun getSupportedCacheLimits(): List<Long> {
         return generateSequence(MIN_CACHE_LIMIT) { it * 2L }
@@ -56,7 +56,7 @@ object CacheCleaner {
         val cacheLimit = getClosestCacheLimit(requestedLimit)
 
         val cacheFoldersSequence = sequenceOf(
-            File(appContext.cacheDir, StorageAccessFrameworkProvider.SAF_CACHE_SUBFOLDER).walkBottomUp(),
+            File(appContext.cacheDir, LEGACY_SAF_CACHE_SUBFOLDER).walkBottomUp(),
             File(appContext.cacheDir, LocalStorageProvider.LOCAL_STORAGE_CACHE_SUBFOLDER).walkBottomUp()
         )
 

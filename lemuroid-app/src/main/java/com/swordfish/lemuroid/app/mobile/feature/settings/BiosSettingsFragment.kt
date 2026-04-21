@@ -2,14 +2,14 @@ package com.swordfish.lemuroid.app.mobile.feature.settings
 
 import android.content.Context
 import android.os.Bundle
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.settings.BiosPreferences
 import com.swordfish.lemuroid.common.preferences.DummyDataStore
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class BiosSettingsFragment : PreferenceFragmentCompat() {
+class BiosSettingsFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var biosPreferences: BiosPreferences

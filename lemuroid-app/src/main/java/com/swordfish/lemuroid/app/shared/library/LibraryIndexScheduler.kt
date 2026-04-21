@@ -1,39 +1,45 @@
 package com.swordfish.lemuroid.app.shared.library
 
 import android.content.Context
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import com.swordfish.lemuroid.app.LemuroidApplication
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 object LibraryIndexScheduler {
-    val CORE_UPDATE_WORK_ID: String = CoreUpdateWork::class.java.simpleName
-    val LIBRARY_INDEX_WORK_ID: String = LibraryIndexWork::class.java.simpleName
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val inProgress = MutableLiveData(false)
+    private var currentJob: Job? = null
 
     fun scheduleLibrarySync(applicationContext: Context) {
-        WorkManager.getInstance(applicationContext)
-            .beginUniqueWork(
-                LIBRARY_INDEX_WORK_ID,
-                ExistingWorkPolicy.APPEND_OR_REPLACE,
-                OneTimeWorkRequestBuilder<LibraryIndexWork>().build()
-            )
-            .enqueue()
-    }
+        cancelLibrarySync(applicationContext)
 
-    fun scheduleCoreUpdate(applicationContext: Context) {
-        WorkManager.getInstance(applicationContext)
-            .beginUniqueWork(
-                CORE_UPDATE_WORK_ID,
-                ExistingWorkPolicy.APPEND_OR_REPLACE,
-                OneTimeWorkRequestBuilder<CoreUpdateWork>().build()
-            )
-            .enqueue()
+        currentJob = scope.launch {
+            inProgress.postValue(true)
+            try {
+                val app = applicationContext.applicationContext as LemuroidApplication
+                app.appComponent.lemuroidLibrary().indexLibrary()
+            } catch (e: CancellationException) {
+                Timber.i("Library indexing cancelled")
+            } catch (e: Throwable) {
+                Timber.e(e, "Library indexing failed")
+            } finally {
+                inProgress.postValue(false)
+            }
+        }
     }
 
     fun cancelLibrarySync(applicationContext: Context) {
-        WorkManager.getInstance(applicationContext).cancelUniqueWork(LIBRARY_INDEX_WORK_ID)
+        currentJob?.cancel()
+        currentJob = null
+        inProgress.postValue(false)
     }
 
-    fun cancelCoreUpdate(applicationContext: Context) {
-        WorkManager.getInstance(applicationContext).cancelUniqueWork(CORE_UPDATE_WORK_ID)
-    }
+    fun isSyncInProgress(): LiveData<Boolean> = inProgress
 }

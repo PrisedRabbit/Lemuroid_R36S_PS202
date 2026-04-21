@@ -40,6 +40,9 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE lastIndexedAt < :lastIndexedAt")
     fun selectByLastIndexedAtLessThan(lastIndexedAt: Long): List<Game>
 
+    @Query("DELETE FROM games WHERE fileUri LIKE :uriPrefix")
+    suspend fun deleteByUriPrefix(uriPrefix: String)
+
     @Query("SELECT * FROM games WHERE isFavorite = 1 ORDER BY title ASC")
     fun selectFavorites(): PagingSource<Int, Game>
 

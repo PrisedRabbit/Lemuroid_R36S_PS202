@@ -2,14 +2,14 @@ package com.swordfish.lemuroid.app.mobile.feature.settings
 
 import android.content.Context
 import android.os.Bundle
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.settings.CoresSelectionPreferences
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class CoresSelectionFragment : PreferenceFragmentCompat() {
+class CoresSelectionFragment : KitKatPreferenceFragment() {
 
     @Inject
     lateinit var coresSelectionPreferences: CoresSelectionPreferences

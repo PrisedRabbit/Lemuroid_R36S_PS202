@@ -33,6 +33,9 @@ abstract class EpoxyGameView : EpoxyModelWithHolder<EpoxyGameView.Holder>() {
         coverLoader.loadCover(game, holder.coverView)
 
         holder.itemView?.setOnClickListener { gameInteractor.onGamePlay(game) }
+        holder.itemView?.setOnFocusChangeListener { view, hasFocus ->
+            view.isActivated = hasFocus
+        }
         holder.itemView?.setOnCreateContextMenuListener(
             GameContextMenuListener(gameInteractor, game)
         )
@@ -40,6 +43,8 @@ abstract class EpoxyGameView : EpoxyModelWithHolder<EpoxyGameView.Holder>() {
 
     override fun unbind(holder: Holder) {
         holder.itemView?.setOnClickListener(null)
+        holder.itemView?.onFocusChangeListener = null
+        holder.itemView?.isActivated = false
         holder.coverView?.apply {
             coverLoader.cancelRequest(this)
         }

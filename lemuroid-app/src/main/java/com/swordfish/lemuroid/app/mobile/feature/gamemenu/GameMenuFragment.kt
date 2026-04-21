@@ -4,15 +4,15 @@ import android.content.Context
 import android.os.Bundle
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.GameMenuContract
 import com.swordfish.lemuroid.app.shared.gamemenu.GameMenuHelper
 import com.swordfish.lemuroid.common.preferences.DummyDataStore
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import dagger.android.support.AndroidSupportInjection
 
-class GameMenuFragment : PreferenceFragmentCompat() {
+class GameMenuFragment : KitKatPreferenceFragment() {
 
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
@@ -45,6 +45,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
             fastForwardEnabled,
             fastForwardSupported
         )
+        GameMenuHelper.bindMainMenuActions(activity, preferenceScreen)
 
         val systemCoreConfig = activity?.intent?.getSerializableExtra(
             GameMenuContract.EXTRA_SYSTEM_CORE_CONFIG

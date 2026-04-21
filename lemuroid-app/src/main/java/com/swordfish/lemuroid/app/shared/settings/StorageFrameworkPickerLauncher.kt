@@ -265,7 +265,7 @@ class StorageFrameworkPickerLauncher : RetrogradeActivity() {
         return preferenceManager.getString(prefString, null)?.let(::File)
     }
 
-    private fun getDefaultDirectory(): String = File(getExternalFilesDir(null), "roms").absolutePath
+    private fun getDefaultDirectory(): String = File(getExternalFilesDir(null) ?: filesDir, "roms").absolutePath
 
     private fun getStorageRoots(): List<File> {
         val externalRoots = mutableListOf<File>()
@@ -287,18 +287,53 @@ class StorageFrameworkPickerLauncher : RetrogradeActivity() {
     }
 
     private fun discoverMountedRoots(): List<File> {
-        val candidates = listOf(
+        val candidates = mutableSetOf<File>()
+        candidates += listOf(
             File("/storage"),
             File("/mnt"),
             File("/mnt/media_rw"),
             File("/Removable"),
         )
 
+        candidates += readMountPoints(File("/proc/mounts"))
+        candidates += readMountPoints(File("/system/etc/vold.fstab"))
+        candidates += readMountPoints(File("/fstab"))
+
         return candidates
             .filter { it.exists() && it.isDirectory && it.canRead() }
             .flatMap { root ->
                 listOf(root) + (root.listFiles()?.toList().orEmpty())
             }
+    }
+
+    private fun readMountPoints(file: File): List<File> {
+        if (!file.exists() || !file.canRead()) {
+            return emptyList()
+        }
+
+        return runCatching {
+            file.readLines()
+                .mapNotNull { line ->
+                    line.trim()
+                        .split(Regex("\\s+"))
+                        .asSequence()
+                        .map(::File)
+                        .firstOrNull(::looksLikeStorageMount)
+                }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun looksLikeStorageMount(file: File): Boolean {
+        val path = file.path.lowercase()
+        if (!path.startsWith("/")) {
+            return false
+        }
+
+        return path.startsWith("/storage/") ||
+            path.startsWith("/mnt/") ||
+            path.startsWith("/removable/") ||
+            path.startsWith("/sdcard") ||
+            listOf("usb", "udisk", "usbotg", "extsd", "external", "mmc").any { it in path }
     }
 
     private fun normalizeStorageRoot(file: File): File {

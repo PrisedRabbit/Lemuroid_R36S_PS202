@@ -5,6 +5,8 @@ import java.io.File
 
 class DirectoriesManager(private val appContext: Context) {
 
+    private fun externalAppDir(): File = appContext.getExternalFilesDir(null) ?: appContext.filesDir
+
     @Deprecated("Use the external states directory")
     fun getInternalStatesDirectory(): File = File(appContext.filesDir, "states").apply {
         mkdirs()
@@ -18,19 +20,19 @@ class DirectoriesManager(private val appContext: Context) {
         mkdirs()
     }
 
-    fun getStatesDirectory(): File = File(appContext.getExternalFilesDir(null), "states").apply {
+    fun getStatesDirectory(): File = File(externalAppDir(), "states").apply {
         mkdirs()
     }
 
-    fun getStatesPreviewDirectory(): File = File(appContext.getExternalFilesDir(null), "state-previews").apply {
+    fun getStatesPreviewDirectory(): File = File(externalAppDir(), "state-previews").apply {
         mkdirs()
     }
 
-    fun getSavesDirectory(): File = File(appContext.getExternalFilesDir(null), "saves").apply {
+    fun getSavesDirectory(): File = File(externalAppDir(), "saves").apply {
         mkdirs()
     }
 
-    fun getInternalRomsDirectory(): File = File(appContext.getExternalFilesDir(null), "roms").apply {
+    fun getInternalRomsDirectory(): File = File(externalAppDir(), "roms").apply {
         mkdirs()
     }
 }

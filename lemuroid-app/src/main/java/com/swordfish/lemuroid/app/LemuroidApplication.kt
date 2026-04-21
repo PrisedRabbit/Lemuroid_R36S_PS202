@@ -18,6 +18,8 @@ import javax.inject.Inject
 
 class LemuroidApplication : DaggerApplication(), HasWorkerInjector {
 
+    lateinit var appComponent: LemuroidApplicationComponent
+
     @Inject
     lateinit var workerInjector: DispatchingAndroidInjector<ListenableWorker>
 
@@ -43,7 +45,8 @@ class LemuroidApplication : DaggerApplication(), HasWorkerInjector {
     }
 
     override fun applicationInjector(): AndroidInjector<out DaggerApplication> {
-        return DaggerLemuroidApplicationComponent.builder().create(this)
+        appComponent = DaggerLemuroidApplicationComponent.builder().create(this) as LemuroidApplicationComponent
+        return appComponent
     }
 
     override fun workerInjector(): AndroidInjector<ListenableWorker> = workerInjector

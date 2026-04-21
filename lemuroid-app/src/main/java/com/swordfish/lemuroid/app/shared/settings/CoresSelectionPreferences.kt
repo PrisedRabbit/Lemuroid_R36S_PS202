@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceScreen
-import com.swordfish.lemuroid.app.shared.library.LibraryIndexScheduler
 import com.swordfish.lemuroid.lib.core.CoresSelection
 import com.swordfish.lemuroid.lib.library.GameSystem
 
@@ -36,11 +35,6 @@ class CoresSelectionPreferences {
         preference.entryValues = system.systemCoreConfigs
             .map { it.coreID.coreName }
             .toTypedArray()
-
-        preference.setOnPreferenceChangeListener { _, _ ->
-            LibraryIndexScheduler.scheduleCoreUpdate(context.applicationContext)
-            true
-        }
 
         return preference
     }
