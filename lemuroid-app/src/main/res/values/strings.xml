@@ -53,6 +53,8 @@
 
     <string name="settings_title_advanced_settings">Advanced settings</string>
     <string name="settings_description_advanced_settings">Display advanced settings</string>
+    <string name="settings_title_open_android_settings">Android settings</string>
+    <string name="settings_description_open_android_settings">Open system settings to manage Home app selection and recovery</string>
     <string name="settings_title_low_latency_audio">Prefer low-latency audio</string>
     <string name="settings_description_low_latency_audio">Reduce audio latency on supported devices. Might increase audio glitches.</string>
 

@@ -105,6 +105,13 @@
             app:iconSpaceReserved="false"
             android:persistent="false"/>
 
+        <Preference
+            android:key="@string/pref_key_open_android_settings"
+            android:title="@string/settings_title_open_android_settings"
+            android:summary="@string/settings_description_open_android_settings"
+            app:iconSpaceReserved="false"
+            android:persistent="false"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>

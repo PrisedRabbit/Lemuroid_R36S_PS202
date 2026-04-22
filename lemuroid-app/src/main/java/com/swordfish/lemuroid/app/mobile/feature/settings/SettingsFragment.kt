@@ -12,6 +12,7 @@ import com.swordfish.lemuroid.app.mobile.shared.KitKatPreferenceFragment
 import com.swordfish.lemuroid.app.shared.library.LibraryIndexScheduler
 import com.swordfish.lemuroid.app.shared.settings.SettingsInteractor
 import com.swordfish.lemuroid.common.coroutines.launchOnState
+import com.swordfish.lemuroid.common.displayHomeSettingsScreen
 import com.swordfish.lemuroid.lib.preferences.SharedPreferencesHelper
 import com.swordfish.lemuroid.lib.storage.DirectoriesManager
 import dagger.android.support.AndroidSupportInjection
@@ -79,6 +80,7 @@ class SettingsFragment : KitKatPreferenceFragment() {
             getString(R.string.pref_key_stop_rescan) -> stopRescanLibrary()
             getString(R.string.pref_key_extenral_folder) -> handleChangeExternalFolder()
             getString(R.string.pref_key_open_gamepad_settings) -> handleOpenGamePadSettings()
+            getString(R.string.pref_key_open_android_settings) -> handleOpenAndroidSettings()
             getString(R.string.pref_key_open_cores_selection) -> handleDisplayCorePage()
             getString(R.string.pref_key_display_bios_info) -> handleDisplayBiosInfo()
             getString(R.string.pref_key_advanced_settings) -> handleAdvancedSettings()
@@ -101,6 +103,10 @@ class SettingsFragment : KitKatPreferenceFragment() {
 
     private fun handleOpenGamePadSettings() {
         findNavController().navigate(R.id.navigation_settings_gamepad)
+    }
+
+    private fun handleOpenAndroidSettings() {
+        requireContext().displayHomeSettingsScreen()
     }
 
     private fun handleChangeExternalFolder() {
