@@ -19,9 +19,9 @@
 
 package com.swordfish.lemuroid.lib.library
 
-import android.os.Build
 import androidx.annotation.StringRes
 import com.swordfish.lemuroid.lib.R
+import com.swordfish.lemuroid.lib.android.SupportedAbis
 import com.swordfish.lemuroid.lib.core.CoreVariable
 import java.util.Locale
 
@@ -1245,7 +1245,7 @@ data class GameSystem(
         private fun isArchitectureSupported(system: GameSystem): Boolean {
             return system.systemCoreConfigs.any { coreConfig ->
                 val supportedOnlyArchitectures = coreConfig.supportedOnlyArchitectures ?: return@any true
-                Build.SUPPORTED_ABIS.any { it in supportedOnlyArchitectures }
+                SupportedAbis.current().any { it in supportedOnlyArchitectures }
             }
         }
 

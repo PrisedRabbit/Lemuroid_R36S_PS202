@@ -20,7 +20,7 @@
 package com.swordfish.lemuroid.lib.game
 
 import android.content.Context
-import android.os.Build
+import com.swordfish.lemuroid.lib.android.SupportedAbis
 import com.swordfish.lemuroid.lib.bios.BiosManager
 import com.swordfish.lemuroid.lib.core.CoreVariable
 import com.swordfish.lemuroid.lib.core.CoreVariablesManager
@@ -136,7 +136,7 @@ class GameLoader(
 
     private fun isArchitectureSupported(systemCoreConfig: SystemCoreConfig): Boolean {
         val supportedOnlyArchitectures = systemCoreConfig.supportedOnlyArchitectures ?: return true
-        return Build.SUPPORTED_ABIS.toSet().intersect(supportedOnlyArchitectures).isNotEmpty()
+        return SupportedAbis.current().any { it in supportedOnlyArchitectures }
     }
 
     private fun findLibrary(context: Context, coreID: CoreID): File? {

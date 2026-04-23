@@ -36,6 +36,7 @@ bool Audio::initializeStream() {
     LOGI("Using low latency stream: %d", audioLatencySettings->useLowLatencyStream);
 
     int32_t audioBufferSize = computeAudioBufferSize();
+    const bool legacyAudioPath = usesLegacyAudioPath();
 
     oboe::AudioStreamBuilder builder;
     builder.setChannelCount(2);
@@ -46,7 +47,7 @@ bool Audio::initializeStream() {
 
     // On pre-AAudio devices Oboe falls back to OpenSLES and otherwise defaults to 48 kHz.
     // Request the hardware rate we got from AudioManager to avoid a second 48 -> 44.1 kHz resample in AudioFlinger.
-    if (!oboe::AudioStreamBuilder::isAAudioRecommended() && oboe::DefaultStreamValues::SampleRate > 0) {
+    if (legacyAudioPath && oboe::DefaultStreamValues::SampleRate > 0) {
         builder.setSampleRate(oboe::DefaultStreamValues::SampleRate);
     }
 
@@ -58,17 +59,30 @@ bool Audio::initializeStream() {
 
     oboe::Result result = builder.openManagedStream(stream);
     if (result == oboe::Result::OK) {
+        int32_t actualBufferSize = stream->getBufferSizeInFrames();
+        if (legacyAudioPath) {
+            auto bufferSizeResult = stream->setBufferSizeInFrames(stream->getBufferCapacityInFrames());
+            if (bufferSizeResult == oboe::Result::OK) {
+                actualBufferSize = bufferSizeResult.value();
+            } else {
+                LOGW(
+                    "Failed to pin audio buffer size. Error: %s",
+                    oboe::convertToText(bufferSizeResult.error())
+                );
+            }
+        }
         LOGI(
-            "Opened audio stream requestedRate=%d sampleRate=%d framesPerBurst=%d bufferCapacity=%d",
+            "Opened audio stream requestedRate=%d sampleRate=%d framesPerBurst=%d bufferSize=%d bufferCapacity=%d",
             builder.getSampleRate(),
             stream->getSampleRate(),
             stream->getFramesPerBurst(),
+            actualBufferSize,
             stream->getBufferCapacityInFrames()
         );
         baseConversionFactor = (double) inputSampleRate / stream->getSampleRate();
         fifoBuffer = std::make_unique<oboe::FifoBuffer>(2, audioBufferSize);
         temporaryAudioBuffer = std::unique_ptr<int16_t[]>(new int16_t[audioBufferSize]);
-        latencyTuner = std::make_unique<oboe::LatencyTuner>(*stream);
+        latencyTuner = legacyAudioPath ? nullptr : std::make_unique<oboe::LatencyTuner>(*stream);
         streamStarted = false;
         return true;
     } else {
@@ -143,7 +157,9 @@ oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void
     auto outputArray = reinterpret_cast<int16_t *>(audioData);
     resampler.resample(temporaryAudioBuffer.get(), currentFramesToSubmit, outputArray, numFrames);
 
-    latencyTuner->tune();
+    if (latencyTuner != nullptr) {
+        latencyTuner->tune();
+    }
 
     return oboe::DataCallbackResult::Continue;
 }
@@ -201,10 +217,11 @@ void Audio::startStreamIfReady() {
     auto result = stream->requestStart();
     if (result == oboe::Result::OK) {
         streamStarted = true;
+        const double startThresholdFactor = usesLegacyAudioPath() ? 3.0 : 2.0;
         LOGI(
             "Started audio stream with bufferedFrames=%u startThreshold=%u",
             fifoBuffer->getFullFramesAvailable(),
-            static_cast<unsigned>(std::ceil(stream->getFramesPerBurst() * baseConversionFactor * 2.0))
+            static_cast<unsigned>(std::ceil(stream->getFramesPerBurst() * baseConversionFactor * startThresholdFactor))
         );
     } else {
         LOGE("Failed to start audio stream. Error: %s", oboe::convertToText(result));
@@ -216,10 +233,15 @@ bool Audio::hasBufferedAudioForStart() const {
         return false;
     }
 
+    const double startThresholdFactor = usesLegacyAudioPath() ? 3.0 : 2.0;
     uint32_t startThresholdFrames = static_cast<uint32_t>(
-        std::ceil(stream->getFramesPerBurst() * baseConversionFactor * 2.0)
+        std::ceil(stream->getFramesPerBurst() * baseConversionFactor * startThresholdFactor)
     );
     return fifoBuffer->getFullFramesAvailable() >= std::max(1u, startThresholdFrames);
+}
+
+bool Audio::usesLegacyAudioPath() const {
+    return !oboe::AudioStreamBuilder::isAAudioRecommended();
 }
 
 void Audio::onErrorAfterClose(oboe::AudioStream* oldStream, oboe::Result result) {

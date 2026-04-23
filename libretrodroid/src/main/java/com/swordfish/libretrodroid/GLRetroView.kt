@@ -388,6 +388,7 @@ class GLRetroView(
 
     private fun buildShader(config: ShaderConfig): GLRetroShader {
         return when (config) {
+            is ShaderConfig.Nearest -> GLRetroShader(LibretroDroid.SHADER_NEAREST)
             is ShaderConfig.Default -> GLRetroShader(LibretroDroid.SHADER_DEFAULT)
             is ShaderConfig.CRT -> GLRetroShader(LibretroDroid.SHADER_CRT)
             is ShaderConfig.LCD -> GLRetroShader(LibretroDroid.SHADER_LCD)

@@ -888,6 +888,10 @@ ShaderManager::Chain ShaderManager::getShader(const ShaderManager::Config& confi
             false
         };
     }
+
+    case Type::SHADER_NEAREST: {
+        return { { { defaultShaderVertex, defaultShaderFragment, false, 1.0 } }, false };
+    }
 }
 }
 

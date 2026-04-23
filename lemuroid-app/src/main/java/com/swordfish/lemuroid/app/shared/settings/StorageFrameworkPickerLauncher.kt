@@ -287,23 +287,25 @@ class StorageFrameworkPickerLauncher : RetrogradeActivity() {
     }
 
     private fun discoverMountedRoots(): List<File> {
-        val candidates = mutableSetOf<File>()
-        candidates += listOf(
+        val containerDirectories = listOf(
             File("/storage"),
             File("/mnt"),
             File("/mnt/media_rw"),
             File("/Removable"),
-        )
+        ).filter { it.exists() && it.isDirectory && it.canRead() }
 
-        candidates += readMountPoints(File("/proc/mounts"))
-        candidates += readMountPoints(File("/system/etc/vold.fstab"))
-        candidates += readMountPoints(File("/fstab"))
+        val mountedRoots = mutableSetOf<File>()
+        mountedRoots += readMountPoints(File("/proc/mounts"))
+        mountedRoots += readMountPoints(File("/system/etc/vold.fstab"))
+        mountedRoots += readMountPoints(File("/fstab"))
+        mountedRoots += containerDirectories.flatMap { container ->
+            container.listFiles()
+                ?.filter { it.isDirectory && it.canRead() && looksLikeStorageMount(it) }
+                .orEmpty()
+        }
 
-        return candidates
+        return mountedRoots
             .filter { it.exists() && it.isDirectory && it.canRead() }
-            .flatMap { root ->
-                listOf(root) + (root.listFiles()?.toList().orEmpty())
-            }
     }
 
     private fun readMountPoints(file: File): List<File> {

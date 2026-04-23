@@ -149,6 +149,7 @@
     </string>
     <string name="error_message_incompatible_state">Это сохранение не совместимо с текущей версией ядра. Пожалуйста, загрузите последнюю версию сохранения в игре или воспользуйтесь предыдущей версией Lemuroid.</string>
     <string name="shader_filter_names_auto">Авто</string>
+    <string name="shader_filter_names_off">Нет</string>
     <string name="shader_filter_names_sharp">Резкий</string>
     <string name="shader_filter_names_smooth">Мягкий</string>
     <string name="shader_filter_names_crt">ЭЛТ</string>

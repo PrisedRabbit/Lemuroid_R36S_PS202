@@ -61,6 +61,7 @@ private:
     void resetFifo();
     void startStreamIfReady();
     bool hasBufferedAudioForStart() const;
+    bool usesLegacyAudioPath() const;
     static int32_t roundToEven(int32_t x);
     double computeDynamicBufferConversionFactor(double dt);
     int32_t computeAudioBufferSize();

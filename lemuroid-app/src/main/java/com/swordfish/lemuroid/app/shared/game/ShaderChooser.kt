@@ -20,6 +20,7 @@ object ShaderChooser {
             useNewHdMode -> getHDShaderForSystem(system)
             hdMode -> getLegacyHDShaderForSystem(system)
             else -> when (screenFilter) {
+                "off" -> ShaderConfig.Nearest
                 "crt" -> ShaderConfig.CRT
                 "lcd" -> ShaderConfig.LCD
                 "smooth" -> ShaderConfig.Default

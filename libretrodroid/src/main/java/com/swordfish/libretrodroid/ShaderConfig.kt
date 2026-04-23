@@ -19,6 +19,7 @@ package com.swordfish.libretrodroid
 
 sealed interface ShaderConfig {
 
+    object Nearest : ShaderConfig
     object Default : ShaderConfig
     object CRT : ShaderConfig
     object LCD : ShaderConfig
