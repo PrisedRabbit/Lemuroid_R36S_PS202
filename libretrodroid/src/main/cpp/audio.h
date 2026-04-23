@@ -36,6 +36,7 @@ private:
 
     const AudioLatencySettings DEFAULT_LATENCY_SETTINGS { 8, false };
     const AudioLatencySettings LOW_LATENCY_SETTINGS { 4, true };
+    const AudioLatencySettings OPENSL_LATENCY_SETTINGS { 12, false };
 
 public:
     Audio(int32_t sampleRate, double refreshRate, bool preferLowLatencyAudio);
@@ -57,6 +58,9 @@ public:
     void setPlaybackSpeed(const double newPlaybackSpeed);
 
 private:
+    void resetFifo();
+    void startStreamIfReady();
+    bool hasBufferedAudioForStart() const;
     static int32_t roundToEven(int32_t x);
     double computeDynamicBufferConversionFactor(double dt);
     int32_t computeAudioBufferSize();
@@ -78,6 +82,8 @@ private:
     std::unique_ptr<oboe::LatencyTuner> latencyTuner = nullptr;
 
     bool startRequested = false;
+    bool streamStarted = false;
+    bool fifoResetPending = false;
     int32_t inputSampleRate;
     double contentRefreshRate = 60.0;
 

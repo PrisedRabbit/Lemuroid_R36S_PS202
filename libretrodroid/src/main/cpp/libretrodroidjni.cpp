@@ -53,6 +53,27 @@ extern "C" {
 
 extern "C" {
 
+JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setDefaultStreamValues(
+    JNIEnv* env,
+    jclass obj,
+    jint sampleRate,
+    jint framesPerBuffer
+) {
+    if (sampleRate > 0) {
+        oboe::DefaultStreamValues::SampleRate = sampleRate;
+    }
+
+    if (framesPerBuffer > 0) {
+        oboe::DefaultStreamValues::FramesPerBurst = framesPerBuffer;
+    }
+
+    LOGI(
+        "Configured Oboe defaults sampleRate=%d framesPerBurst=%d",
+        oboe::DefaultStreamValues::SampleRate,
+        oboe::DefaultStreamValues::FramesPerBurst
+    );
+}
+
 JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_availableDisks(
     JNIEnv* env,
     jclass obj

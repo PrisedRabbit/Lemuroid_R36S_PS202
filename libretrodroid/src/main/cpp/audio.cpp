@@ -44,6 +44,12 @@ bool Audio::initializeStream() {
     builder.setDataCallback(this);
     builder.setErrorCallback(this);
 
+    // On pre-AAudio devices Oboe falls back to OpenSLES and otherwise defaults to 48 kHz.
+    // Request the hardware rate we got from AudioManager to avoid a second 48 -> 44.1 kHz resample in AudioFlinger.
+    if (!oboe::AudioStreamBuilder::isAAudioRecommended() && oboe::DefaultStreamValues::SampleRate > 0) {
+        builder.setSampleRate(oboe::DefaultStreamValues::SampleRate);
+    }
+
     if (audioLatencySettings->useLowLatencyStream) {
         builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
     } else {
@@ -52,10 +58,18 @@ bool Audio::initializeStream() {
 
     oboe::Result result = builder.openManagedStream(stream);
     if (result == oboe::Result::OK) {
+        LOGI(
+            "Opened audio stream requestedRate=%d sampleRate=%d framesPerBurst=%d bufferCapacity=%d",
+            builder.getSampleRate(),
+            stream->getSampleRate(),
+            stream->getFramesPerBurst(),
+            stream->getBufferCapacityInFrames()
+        );
         baseConversionFactor = (double) inputSampleRate / stream->getSampleRate();
         fifoBuffer = std::make_unique<oboe::FifoBuffer>(2, audioBufferSize);
         temporaryAudioBuffer = std::unique_ptr<int16_t[]>(new int16_t[audioBufferSize]);
         latencyTuner = std::make_unique<oboe::LatencyTuner>(*stream);
+        streamStarted = false;
         return true;
     } else {
         LOGE("Failed to create stream. Error: %s", oboe::convertToText(result));
@@ -66,7 +80,9 @@ bool Audio::initializeStream() {
 }
 
 std::unique_ptr<Audio::AudioLatencySettings> Audio::findBestLatencySettings(bool preferLowLatencyAudio) {
-    if (oboe::AudioStreamBuilder::isAAudioRecommended() && preferLowLatencyAudio) {
+    if (!oboe::AudioStreamBuilder::isAAudioRecommended()) {
+        return std::make_unique<AudioLatencySettings>(OPENSL_LATENCY_SETTINGS);
+    } else if (preferLowLatencyAudio) {
         return std::make_unique<AudioLatencySettings>(LOW_LATENCY_SETTINGS);
     } else {
         return std::make_unique<AudioLatencySettings>(DEFAULT_LATENCY_SETTINGS);
@@ -87,18 +103,25 @@ double Audio::computeMaximumLatency() const {
 
 void Audio::start() {
     startRequested = true;
-    if (stream != nullptr)
-        stream->requestStart();
+    if (fifoResetPending) {
+        resetFifo();
+        fifoResetPending = false;
+    }
+    startStreamIfReady();
 }
 
 void Audio::stop() {
     startRequested = false;
-    if (stream != nullptr)
+    if (stream != nullptr) {
         stream->requestStop();
+    }
+    streamStarted = false;
+    fifoResetPending = true;
 }
 
 void Audio::write(const int16_t *data, size_t frames) {
     fifoBuffer->write(data, frames * 2);
+    startStreamIfReady();
 }
 
 void Audio::setPlaybackSpeed(const double newPlaybackSpeed) {
@@ -155,6 +178,50 @@ int32_t Audio::roundToEven(int32_t x) {
     return (x / 2) * 2;
 }
 
+void Audio::resetFifo() {
+    if (fifoBuffer == nullptr) {
+        return;
+    }
+
+    fifoBuffer->setReadCounter(0);
+    fifoBuffer->setWriteCounter(0);
+    framesToSubmit = 0.0;
+    errorIntegral = 0.0;
+}
+
+void Audio::startStreamIfReady() {
+    if (!startRequested || streamStarted || stream == nullptr || fifoBuffer == nullptr) {
+        return;
+    }
+
+    if (!hasBufferedAudioForStart()) {
+        return;
+    }
+
+    auto result = stream->requestStart();
+    if (result == oboe::Result::OK) {
+        streamStarted = true;
+        LOGI(
+            "Started audio stream with bufferedFrames=%u startThreshold=%u",
+            fifoBuffer->getFullFramesAvailable(),
+            static_cast<unsigned>(std::ceil(stream->getFramesPerBurst() * baseConversionFactor * 2.0))
+        );
+    } else {
+        LOGE("Failed to start audio stream. Error: %s", oboe::convertToText(result));
+    }
+}
+
+bool Audio::hasBufferedAudioForStart() const {
+    if (fifoBuffer == nullptr || stream == nullptr) {
+        return false;
+    }
+
+    uint32_t startThresholdFrames = static_cast<uint32_t>(
+        std::ceil(stream->getFramesPerBurst() * baseConversionFactor * 2.0)
+    );
+    return fifoBuffer->getFullFramesAvailable() >= std::max(1u, startThresholdFrames);
+}
+
 void Audio::onErrorAfterClose(oboe::AudioStream* oldStream, oboe::Result result) {
     AudioStreamErrorCallback::onErrorAfterClose(oldStream, result);
     LOGI("Stream error in oboe::onErrorAfterClose %s", oboe::convertToText(result));
@@ -164,7 +231,7 @@ void Audio::onErrorAfterClose(oboe::AudioStream* oldStream, oboe::Result result)
 
     initializeStream();
     if (startRequested) {
-        start();
+        startStreamIfReady();
     }
 }
 

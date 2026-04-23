@@ -66,6 +66,8 @@ public class LibretroDroid {
     public static final int ERROR_CHEAT = 4;
     public static final int ERROR_GENERIC = -1;
 
+    public static native void setDefaultStreamValues(int sampleRate, int framesPerBuffer);
+
     public static native void create(
         int GLESVersion,
         String coreFilePath,
