@@ -1,6 +1,8 @@
 package com.swordfish.lemuroid.lib.storage
 
+import android.net.Uri
 import android.content.Context
+import com.swordfish.lemuroid.lib.library.db.entity.Game
 import java.io.File
 
 class DirectoriesManager(private val appContext: Context) {
@@ -32,7 +34,19 @@ class DirectoriesManager(private val appContext: Context) {
         mkdirs()
     }
 
+    fun getGameSavesDirectory(game: Game): File {
+        val romDirectory = getRomDirectory(game) ?: return getSavesDirectory()
+        return File(romDirectory, "saves").apply {
+            mkdirs()
+        }
+    }
+
     fun getInternalRomsDirectory(): File = File(externalAppDir(), "roms").apply {
         mkdirs()
+    }
+
+    private fun getRomDirectory(game: Game): File? {
+        val romPath = Uri.parse(game.fileUri).path ?: return null
+        return File(romPath).parentFile
     }
 }

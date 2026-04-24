@@ -20,9 +20,19 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
         size: Int
     ): Bitmap? = withContext(Dispatchers.IO) {
         val screenshotName = getSlotScreenshotName(game, index)
-        val file = getPreviewFile(screenshotName, coreID.coreName)
+        val file = getPreviewFile(game, screenshotName, coreID.coreName)
         val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-        ThumbnailUtils.extractThumbnail(bitmap, size, size)
+        if (bitmap != null) {
+            return@withContext ThumbnailUtils.extractThumbnail(bitmap, size, size)
+        }
+
+        val legacyFile = getLegacyPreviewFile(screenshotName, coreID.coreName)
+        val legacyBitmap = BitmapFactory.decodeFile(legacyFile.absolutePath)
+        if (legacyBitmap != null) {
+            return@withContext ThumbnailUtils.extractThumbnail(legacyBitmap, size, size)
+        }
+
+        null
     }
 
     suspend fun setPreviewForSlot(
@@ -32,16 +42,28 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
         index: Int
     ) = withContext(Dispatchers.IO) {
         val screenshotName = getSlotScreenshotName(game, index)
-        val file = getPreviewFile(screenshotName, coreID.coreName)
+        val file = getPreviewFile(game, screenshotName, coreID.coreName)
         FileOutputStream(file).use {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
         }
     }
 
-    private fun getPreviewFile(fileName: String, coreName: String): File {
+    private fun getPreviewFile(game: Game, fileName: String, coreName: String): File {
+        val statesDirectories = File(getGameStatesPreviewDirectory(game), coreName)
+        statesDirectories.mkdirs()
+        return File(statesDirectories, fileName)
+    }
+
+    private fun getLegacyPreviewFile(fileName: String, coreName: String): File {
         val statesDirectories = File(directoriesManager.getStatesPreviewDirectory(), coreName)
         statesDirectories.mkdirs()
         return File(statesDirectories, fileName)
+    }
+
+    private fun getGameStatesPreviewDirectory(game: Game): File {
+        return File(directoriesManager.getGameSavesDirectory(game), "state-previews").apply {
+            mkdirs()
+        }
     }
 
     private fun getSlotScreenshotName(

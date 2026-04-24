@@ -6,10 +6,12 @@ import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.lemuroid.lib.library.metadata.GameMetadata
 import com.swordfish.lemuroid.lib.library.metadata.GameMetadataProvider
 import com.swordfish.lemuroid.lib.storage.StorageFile
+import android.net.Uri
+import java.io.File
+import java.util.Locale
 import com.swordfish.lemuroid.metadata.libretrodb.db.LibretroDBManager
 import com.swordfish.lemuroid.metadata.libretrodb.db.LibretroDatabase
 import com.swordfish.lemuroid.metadata.libretrodb.db.entity.LibretroRom
-import java.util.Locale
 import timber.log.Timber
 
 class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
@@ -27,7 +29,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         Timber.d("Looking metadata for file: $storageFile")
 
         val metadata = runCatching {
-            findByCRC(storageFile, db)
+                findByCRC(storageFile, db)
                 ?: findBySerial(storageFile, db)
                 ?: findByFilename(db, storageFile)
                 ?: findByPathAndFilename(db, storageFile)
@@ -44,12 +46,11 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         return metadata
     }
 
-    private fun convertToGameMetadata(rom: LibretroRom): GameMetadata {
-        val system = GameSystem.findById(rom.system!!)
+    private fun convertToGameMetadata(rom: LibretroRom, storageFile: StorageFile): GameMetadata {
         return GameMetadata(
             name = rom.name,
             romName = rom.romName,
-            thumbnail = computeCoverUrl(system, rom.name),
+            thumbnail = findLocalCoverUrl(storageFile, rom.romName, rom.name),
             system = rom.system,
             developer = rom.developer
         )
@@ -58,7 +59,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
     private suspend fun findByFilename(db: LibretroDatabase, file: StorageFile): GameMetadata? {
         return db.gameDao().findByFileName(file.name)
             .filterNullable { extractGameSystem(it).scanOptions.scanByFilename }
-            ?.let { convertToGameMetadata(it) }
+            ?.let { convertToGameMetadata(it, file) }
     }
 
     private suspend fun findByPathAndFilename(
@@ -68,7 +69,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         return db.gameDao().findByFileName(file.name)
             .filterNullable { extractGameSystem(it).scanOptions.scanByPathAndFilename }
             .filterNullable { parentContainsSystem(file.path, extractGameSystem(it).id.dbname) }
-            ?.let { convertToGameMetadata(it) }
+            ?.let { convertToGameMetadata(it, file) }
     }
 
     private fun findByPathAndSupportedExtension(file: StorageFile): GameMetadata? {
@@ -82,7 +83,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
             GameMetadata(
                 name = file.extensionlessName,
                 romName = file.name,
-                thumbnail = null,
+                thumbnail = findLocalCoverUrl(file, file.name, file.extensionlessName),
                 system = it.id.dbname,
                 developer = null
             )
@@ -96,13 +97,13 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
     private suspend fun findByCRC(file: StorageFile, db: LibretroDatabase): GameMetadata? {
         if (file.crc == null || file.crc == "0") return null
         return file.crc?.let { crc32 -> db.gameDao().findByCRC(crc32) }
-            ?.let { convertToGameMetadata(it) }
+            ?.let { convertToGameMetadata(it, file) }
     }
 
     private suspend fun findBySerial(file: StorageFile, db: LibretroDatabase): GameMetadata? {
         if (file.serial == null) return null
         return db.gameDao().findBySerial(file.serial!!)
-            ?.let { convertToGameMetadata(it) }
+            ?.let { convertToGameMetadata(it, file) }
     }
 
     private fun findByKnownSystem(file: StorageFile): GameMetadata? {
@@ -111,7 +112,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         return GameMetadata(
             name = file.extensionlessName,
             romName = file.name,
-            thumbnail = null,
+            thumbnail = findLocalCoverUrl(file, file.name, file.extensionlessName),
             system = file.systemID!!.dbname,
             developer = null,
         )
@@ -128,7 +129,7 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
             GameMetadata(
                 name = file.extensionlessName,
                 romName = file.name,
-                thumbnail = null,
+                thumbnail = findLocalCoverUrl(file, file.name, file.extensionlessName),
                 system = it.id.dbname,
                 developer = null
             )
@@ -141,22 +142,55 @@ class LibretroDBMetadataProvider(private val ovgdbManager: LibretroDBManager) :
         return GameSystem.findById(rom.system!!)
     }
 
-    private fun computeCoverUrl(system: GameSystem, name: String?): String? {
-        var systemName = system.libretroFullName
+    private fun findLocalCoverUrl(storageFile: StorageFile, vararg candidates: String?): String? {
+        val path = storageFile.path ?: storageFile.uri.path ?: return null
+        val romFile = File(path)
+        val imagesDir = romFile.parentFile?.resolve("images") ?: return null
+        if (!imagesDir.isDirectory) return null
 
-        // Specific mame version don't have any thumbnails in Libretro database
-        if (system.id == SystemID.MAME2003PLUS) {
-            systemName = "MAME"
+        val coverFiles = coverIndexFor(imagesDir)
+        val normalizedCandidates = candidates
+            .filterNotNull()
+            .flatMap(::coverNameVariants)
+            .map(::normalizeCoverName)
+            .filter { it.isNotBlank() }
+            .distinct()
+
+        for (candidate in normalizedCandidates) {
+            coverFiles[candidate]?.let { return Uri.fromFile(it).toString() }
         }
 
-        if (name == null) {
-            return null
-        }
-
-        val imageType = "Named_Boxarts"
-
-        val thumbGameName = name.replace("&", "_")
-
-        return "http://thumbnails.libretro.com/$systemName/$imageType/$thumbGameName.png"
+        return null
     }
+
+    private fun coverIndexFor(imagesDir: File): Map<String, File> {
+        val key = imagesDir.absolutePath
+        return coverIndexCache.getOrPut(key) {
+            imagesDir.listFiles()
+                ?.filter { it.isFile && supportedCoverExtensions.contains(it.extension.toLowerCase(Locale.US)) }
+                ?.associateBy { normalizeCoverName(it.nameWithoutExtension) }
+                .orEmpty()
+        }
+    }
+
+    private fun coverNameVariants(value: String): List<String> {
+        val strippedTags = value
+            .replace(Regex("\\s*\\(.*?\\)"), "")
+            .replace(Regex("\\s*\\[.*?\\]"), "")
+            .trim()
+
+        return listOf(value, strippedTags, value.substringBeforeLast(".", value))
+    }
+
+    private fun normalizeCoverName(value: String): String {
+        return value
+            .toLowerCase(Locale.US)
+            .replace(Regex("\\(.*?\\)"), "")
+            .replace(Regex("\\[.*?\\]"), "")
+            .replace(Regex("[^a-z0-9]+"), "")
+    }
+
+    private val coverIndexCache = mutableMapOf<String, Map<String, File>>()
+
+    private val supportedCoverExtensions = setOf("png", "jpg", "jpeg")
 }

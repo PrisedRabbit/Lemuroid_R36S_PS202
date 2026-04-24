@@ -52,6 +52,7 @@ import com.swordfish.lemuroid.lib.game.GameLoaderError
 import com.swordfish.lemuroid.lib.game.GameLoaderException
 import com.swordfish.lemuroid.lib.library.ExposedSetting
 import com.swordfish.lemuroid.lib.library.GameSystem
+import com.swordfish.lemuroid.lib.library.SystemID
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.saves.IncompatibleStateException
@@ -894,10 +895,19 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     private suspend fun reset() = withLoading {
         try {
             delay(longAnimationDuration().toLong())
-            retroGameViewFlow().reset()
+            if (system.id == SystemID.PSX) {
+                relaunchCurrentGame()
+            } else {
+                retroGameViewFlow().reset()
+            }
         } catch (e: Throwable) {
             Timber.e(e, "Error in reset")
         }
+    }
+
+    private suspend fun relaunchCurrentGame() = withContext(Dispatchers.Main) {
+        intent.putExtra(EXTRA_LOAD_SAVE, false)
+        recreate()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

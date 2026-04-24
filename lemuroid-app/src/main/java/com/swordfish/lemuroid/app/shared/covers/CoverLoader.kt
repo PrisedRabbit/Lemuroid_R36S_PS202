@@ -14,7 +14,14 @@ class CoverLoader(applicationContext: Context) {
     fun loadCover(game: Game, imageView: ImageView?) {
         if (imageView == null) return
 
-        imageView.load(getFallbackDrawable(game))
+        val coverUrl = game.coverFrontUrl
+        if (coverUrl.isNullOrBlank()) {
+            imageView.load(getFallbackDrawable(game))
+        } else {
+            imageView.load(coverUrl) {
+                error(getFallbackDrawable(game))
+            }
+        }
     }
 
     fun cancelRequest(imageView: ImageView) {

@@ -96,7 +96,7 @@ class LemuroidLibrary(
         val entries = batch.map { fetchEntriesFromDatabase(it) }
 
         val existingEntries = entries.filterIsInstance<ScanEntry.GameFile>()
-        handleExistingEntries(existingEntries, startedAtMs)
+        handleExistingEntries(existingEntries, provider, gameMetadata, startedAtMs)
 
         val newEntries = entries.filterIsInstance<ScanEntry.File>()
             .map { buildEntryFromMetadata(it.file, provider, gameMetadata, startedAtMs) }
@@ -118,14 +118,36 @@ class LemuroidLibrary(
         }
     }
 
-    private fun handleExistingEntries(entries: List<ScanEntry.GameFile>, startedAtMs: Long) {
-        updateGames(entries, startedAtMs)
+    private suspend fun handleExistingEntries(
+        entries: List<ScanEntry.GameFile>,
+        provider: StorageProvider,
+        metadataProvider: GameMetadataProvider,
+        startedAtMs: Long
+    ) {
+        updateGames(entries, provider, metadataProvider, startedAtMs)
         updateDataFiles(entries, startedAtMs)
     }
 
-    private fun updateGames(entries: List<ScanEntry.GameFile>, startedAtMs: Long) {
+    private suspend fun updateGames(
+        entries: List<ScanEntry.GameFile>,
+        provider: StorageProvider,
+        metadataProvider: GameMetadataProvider,
+        startedAtMs: Long
+    ) {
         val updatedGames = entries
-            .map { it.game.copy(lastIndexedAt = startedAtMs) }
+            .mapNotNull { entry ->
+                val storageFile = safeStorageFile(provider, entry.file.primaryFile)
+                val metadata = storageFile?.let { metadataProvider.retrieveMetadata(it) }
+                val gameSystem = metadata?.system?.let { GameSystem.findById(it) } ?: GameSystem.findById(entry.game.systemId)
+
+                entry.game.copy(
+                    title = metadata?.name ?: entry.game.title,
+                    systemId = gameSystem.id.dbname,
+                    developer = metadata?.developer ?: entry.game.developer,
+                    coverFrontUrl = metadata?.thumbnail ?: entry.game.coverFrontUrl,
+                    lastIndexedAt = startedAtMs
+                )
+            }
 
         updatedGames
             .forEach { Timber.d("Updating game: $it") }

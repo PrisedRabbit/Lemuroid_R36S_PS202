@@ -109,7 +109,7 @@ class GameLoader(
                 .toTypedArray()
 
             val systemDirectory = directoriesManager.getSystemDirectory()
-            val savesDirectory = directoriesManager.getSavesDirectory()
+            val savesDirectory = directoriesManager.getGameSavesDirectory(game)
 
             emit(
                 LoadingState.Ready(
