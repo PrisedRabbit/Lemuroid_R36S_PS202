@@ -91,8 +91,8 @@
     <string name="game_context_menu_restart">Restart</string>
     <string name="game_context_menu_create_shortcut">Pin to launcher</string>
 
-    <string name="home_empty_title">Copy ROMs into the app folder</string>
-    <string name="home_empty_message">Lemuroid scans its own ROMs folder on this KitKat build.\nCopy your ROM files there, then rescan.</string>
+    <string name="home_empty_title">Choose a ROM folder and rescan</string>
+    <string name="home_empty_message">Lemuroid can scan a folder you choose on this KitKat build.\nPick your ROM directory in settings, then run Rescan.</string>
     <string name="home_empty_action">Show ROMs Folder</string>
 
     <string name="game_menu_save">Save</string>
@@ -150,7 +150,7 @@
 
     <string name="dialog_saf_not_found">This device does not support the StorageAccessFramework file picker. Please manually copy uncompressed ROM files into %1$s and hit Rescan.</string>
     <string name="kitkat_roms_directory_title">ROMs Folder</string>
-    <string name="kitkat_roms_directory_message">This KitKat build scans only the app ROMs folder.\n\nCopy your ROM files into:\n%1$s\n\nThen hit Rescan.</string>
+    <string name="kitkat_roms_directory_message">This KitKat build can scan a folder you choose.\n\nCurrent ROM directory:\n%1$s\n\nChange it in settings if needed, then hit Rescan.</string>
 
     <string name="system_grid_details">%1$s games</string>
 

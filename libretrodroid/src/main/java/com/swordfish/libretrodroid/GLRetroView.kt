@@ -21,6 +21,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.media.AudioManager
 import android.opengl.GLSurfaceView
+import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
