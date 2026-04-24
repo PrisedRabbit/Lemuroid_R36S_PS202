@@ -74,5 +74,11 @@ It originated from a rib of [Retrograde](https://github.com/retrograde/retrograd
 - Customizable touch controls (size and position)
 - Cloud save sync
 
+### Covers:
+- This fork loads covers from a local `images/` folder next to the ROM directory.
+- It matches cover names against the ROM title and filename after normalizing case, punctuation, and region tags like `(USA)` or `[!]`.
+- If a local cover is found, the app stores that path in the library and uses it directly.
+- Network cover fetching is disabled here.
+
 ### Languages:
 You can help translate Lemuroid in your native language by going here: https://crowdin.com/project/lemuroid
