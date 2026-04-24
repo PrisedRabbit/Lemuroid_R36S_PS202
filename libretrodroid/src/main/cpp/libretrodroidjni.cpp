@@ -66,12 +66,6 @@ JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_setDefault
     if (framesPerBuffer > 0) {
         oboe::DefaultStreamValues::FramesPerBurst = framesPerBuffer;
     }
-
-    LOGI(
-        "Configured Oboe defaults sampleRate=%d framesPerBurst=%d",
-        oboe::DefaultStreamValues::SampleRate,
-        oboe::DefaultStreamValues::FramesPerBurst
-    );
 }
 
 JNIEXPORT jint JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_availableDisks(
@@ -362,6 +356,7 @@ JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_create(
     jobject shaderConfig,
     jfloat refreshRate,
     jboolean preferLowLatencyAudio,
+    jint deviceAudioProfile,
     jboolean enableVirtualFileSystem,
     jboolean skipDuplicateFrames,
     jstring language
@@ -389,6 +384,7 @@ JNIEXPORT void JNICALL Java_com_swordfish_libretrodroid_LibretroDroid_create(
             JavaUtils::shaderFromJava(env, shaderConfig),
             refreshRate,
             preferLowLatencyAudio,
+            static_cast<DeviceAudioProfile>(deviceAudioProfile),
             enableVirtualFileSystem,
             skipDuplicateFrames,
             deviceLanguage.stdString()

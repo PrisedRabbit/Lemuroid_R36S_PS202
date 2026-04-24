@@ -81,6 +81,7 @@ public:
         const ShaderManager::Config& shaderConfig,
         float refreshRate,
         bool lowLatencyAudio,
+        DeviceAudioProfile deviceAudioProfile,
         bool enableVirtualFileSystem,
         bool duplicateFrames,
         const std::string& language
@@ -149,6 +150,7 @@ private:
     unsigned int frameSpeed = 1;
     bool audioEnabled = true;
     bool preferLowLatencyAudio = false;
+    DeviceAudioProfile deviceAudioProfile = DeviceAudioProfile::DEFAULT;
     bool rumbleEnabled = false;
 
     ShaderManager::Config fragmentShaderConfig = ShaderManager::Config {

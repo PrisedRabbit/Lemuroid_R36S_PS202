@@ -18,17 +18,25 @@
 #include "log.h"
 
 #include "audio.h"
+#include <algorithm>
 #include <cmath>
 #include <memory>
+#include <thread>
 
 namespace libretrodroid {
 
-Audio::Audio(int32_t sampleRate, double refreshRate, bool preferLowLatencyAudio) {
+Audio::Audio(
+    int32_t sampleRate,
+    double refreshRate,
+    bool preferLowLatencyAudio,
+    DeviceAudioProfile deviceAudioProfile
+) {
     LOGI("Audio initialization has been called with input sample rate %d", sampleRate);
 
     contentRefreshRate = refreshRate;
     inputSampleRate = sampleRate;
-    audioLatencySettings = findBestLatencySettings(preferLowLatencyAudio);
+    this->deviceAudioProfile = deviceAudioProfile;
+    audioLatencySettings = findBestLatencySettings(shouldPreferLowLatencyAudio(preferLowLatencyAudio));
     initializeStream();
 }
 
@@ -45,16 +53,22 @@ bool Audio::initializeStream() {
     builder.setDataCallback(this);
     builder.setErrorCallback(this);
 
+    if (deviceAudioProfile == DeviceAudioProfile::PS202) {
+        builder.setAudioApi(oboe::AudioApi::OpenSLES);
+    }
+
     // On pre-AAudio devices Oboe falls back to OpenSLES and otherwise defaults to 48 kHz.
     // Request the hardware rate we got from AudioManager to avoid a second 48 -> 44.1 kHz resample in AudioFlinger.
     if (legacyAudioPath && oboe::DefaultStreamValues::SampleRate > 0) {
         builder.setSampleRate(oboe::DefaultStreamValues::SampleRate);
     }
 
+    const int32_t framesPerCallback = getFramesPerCallback(audioBufferSize);
+
     if (audioLatencySettings->useLowLatencyStream) {
         builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
     } else {
-        builder.setFramesPerCallback(audioBufferSize / 10);
+        builder.setFramesPerCallback(framesPerCallback);
     }
 
     oboe::Result result = builder.openManagedStream(stream);
@@ -72,10 +86,11 @@ bool Audio::initializeStream() {
             }
         }
         LOGI(
-            "Opened audio stream requestedRate=%d sampleRate=%d framesPerBurst=%d bufferSize=%d bufferCapacity=%d",
+            "Opened audio stream requestedRate=%d sampleRate=%d framesPerBurst=%d framesPerCallback=%d bufferSize=%d bufferCapacity=%d",
             builder.getSampleRate(),
             stream->getSampleRate(),
             stream->getFramesPerBurst(),
+            framesPerCallback,
             actualBufferSize,
             stream->getBufferCapacityInFrames()
         );
@@ -94,8 +109,8 @@ bool Audio::initializeStream() {
 }
 
 std::unique_ptr<Audio::AudioLatencySettings> Audio::findBestLatencySettings(bool preferLowLatencyAudio) {
-    if (!oboe::AudioStreamBuilder::isAAudioRecommended()) {
-        return std::make_unique<AudioLatencySettings>(OPENSL_LATENCY_SETTINGS);
+    if (usesLegacyAudioPath()) {
+        return std::make_unique<AudioLatencySettings>(getOpenSLESLatencySettings());
     } else if (preferLowLatencyAudio) {
         return std::make_unique<AudioLatencySettings>(LOW_LATENCY_SETTINGS);
     } else {
@@ -134,6 +149,7 @@ void Audio::stop() {
 }
 
 void Audio::write(const int16_t *data, size_t frames) {
+    waitForWritableAudio(frames * 2);
     fifoBuffer->write(data, frames * 2);
     startStreamIfReady();
 }
@@ -143,7 +159,7 @@ void Audio::setPlaybackSpeed(const double newPlaybackSpeed) {
 }
 
 oboe::DataCallbackResult Audio::onAudioReady(oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
-    double dynamicBufferFactor = computeDynamicBufferConversionFactor(0.001 * numFrames);
+    double dynamicBufferFactor = usesDynamicBufferSync() ? computeDynamicBufferConversionFactor(0.001 * numFrames) : 1.0;
     double finalConversionFactor = baseConversionFactor * dynamicBufferFactor * playbackSpeed;
 
     // When using low-latency stream, numFrames is very low (~100) and the dynamic buffer scaling doesn't work with rounding.
@@ -194,6 +210,25 @@ int32_t Audio::roundToEven(int32_t x) {
     return (x / 2) * 2;
 }
 
+void Audio::waitForWritableAudio(size_t frames) const {
+    if (deviceAudioProfile != DeviceAudioProfile::PS202 || fifoBuffer == nullptr) {
+        return;
+    }
+
+    const uint32_t requiredFrames = std::min(
+        static_cast<uint32_t>(frames),
+        fifoBuffer->getBufferCapacityInFrames()
+    );
+
+    while (
+        startRequested &&
+        streamStarted &&
+        fifoBuffer->getBufferCapacityInFrames() - fifoBuffer->getFullFramesAvailable() < requiredFrames
+    ) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
 void Audio::resetFifo() {
     if (fifoBuffer == nullptr) {
         return;
@@ -217,11 +252,10 @@ void Audio::startStreamIfReady() {
     auto result = stream->requestStart();
     if (result == oboe::Result::OK) {
         streamStarted = true;
-        const double startThresholdFactor = usesLegacyAudioPath() ? 3.0 : 2.0;
         LOGI(
             "Started audio stream with bufferedFrames=%u startThreshold=%u",
             fifoBuffer->getFullFramesAvailable(),
-            static_cast<unsigned>(std::ceil(stream->getFramesPerBurst() * baseConversionFactor * startThresholdFactor))
+            static_cast<unsigned>(std::ceil(stream->getFramesPerBurst() * baseConversionFactor * getStartThresholdFactor()))
         );
     } else {
         LOGE("Failed to start audio stream. Error: %s", oboe::convertToText(result));
@@ -233,15 +267,55 @@ bool Audio::hasBufferedAudioForStart() const {
         return false;
     }
 
-    const double startThresholdFactor = usesLegacyAudioPath() ? 3.0 : 2.0;
     uint32_t startThresholdFrames = static_cast<uint32_t>(
-        std::ceil(stream->getFramesPerBurst() * baseConversionFactor * startThresholdFactor)
+        std::ceil(stream->getFramesPerBurst() * baseConversionFactor * getStartThresholdFactor())
     );
     return fifoBuffer->getFullFramesAvailable() >= std::max(1u, startThresholdFrames);
 }
 
 bool Audio::usesLegacyAudioPath() const {
-    return !oboe::AudioStreamBuilder::isAAudioRecommended();
+    return deviceAudioProfile == DeviceAudioProfile::PS202 || !oboe::AudioStreamBuilder::isAAudioRecommended();
+}
+
+Audio::AudioLatencySettings Audio::getOpenSLESLatencySettings() const {
+    switch (deviceAudioProfile) {
+        case DeviceAudioProfile::PS202:
+            return PS202_OPENSL_LATENCY_SETTINGS;
+        case DeviceAudioProfile::DEFAULT:
+        default:
+            return DEFAULT_OPENSL_LATENCY_SETTINGS;
+    }
+}
+
+int32_t Audio::getFramesPerCallback(int32_t audioBufferSize) const {
+    if (deviceAudioProfile == DeviceAudioProfile::PS202) {
+        return PS202_AUDIO_BLOCK_FRAMES;
+    }
+
+    return std::max(1, audioBufferSize / 10);
+}
+
+double Audio::getStartThresholdFactor() const {
+    if (deviceAudioProfile == DeviceAudioProfile::PS202) {
+        return 4.0;
+    }
+
+    if (usesLegacyAudioPath()) {
+        return 3.0;
+    }
+
+    return 2.0;
+}
+
+bool Audio::shouldPreferLowLatencyAudio(bool preferLowLatencyAudio) const {
+    if (usesLegacyAudioPath()) {
+        return false;
+    }
+    return preferLowLatencyAudio;
+}
+
+bool Audio::usesDynamicBufferSync() const {
+    return deviceAudioProfile != DeviceAudioProfile::PS202;
 }
 
 void Audio::onErrorAfterClose(oboe::AudioStream* oldStream, oboe::Result result) {

@@ -21,7 +21,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.media.AudioManager
 import android.opengl.GLSurfaceView
-import android.util.Log
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -94,6 +93,7 @@ class GLRetroView(
             buildShader(data.shader),
             getDefaultRefreshRate(),
             data.preferLowLatencyAudio,
+            data.deviceAudioProfile.nativeValue,
             data.gameVirtualFiles.isNotEmpty(),
             data.skipDuplicateFrames,
             getDeviceLanguage()
@@ -114,11 +114,6 @@ class GLRetroView(
             audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER)?.toIntOrNull()
 
         LibretroDroid.setDefaultStreamValues(sampleRate ?: 0, framesPerBuffer ?: 0)
-
-        Log.i(
-            "GLRetroView",
-            "Configured audio defaults sampleRate=${sampleRate ?: "default"} framesPerBuffer=${framesPerBuffer ?: "default"}"
-        )
     }
 
     private fun getDeviceLanguage() = Locale.getDefault().language

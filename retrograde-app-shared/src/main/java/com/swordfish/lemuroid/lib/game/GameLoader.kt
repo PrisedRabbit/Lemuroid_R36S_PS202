@@ -20,6 +20,7 @@
 package com.swordfish.lemuroid.lib.game
 
 import android.content.Context
+import android.os.Build
 import com.swordfish.lemuroid.lib.android.SupportedAbis
 import com.swordfish.lemuroid.lib.bios.BiosManager
 import com.swordfish.lemuroid.lib.core.CoreVariable
@@ -51,6 +52,11 @@ class GameLoader(
     private val directoriesManager: DirectoriesManager,
     private val biosManager: BiosManager
 ) {
+    companion object {
+        private const val PS202_MODEL = "PS202"
+        private const val PS202_SNES_LIBRARY = "libsnes9x2005_libretro_android.so"
+    }
+
     sealed class LoadingState {
         object LoadingCore : LoadingState()
         object LoadingGame : LoadingState()
@@ -145,9 +151,22 @@ class GameLoader(
             context.filesDir
         )
 
-        return files
-            .flatMap { it.walkBottomUp() }
-            .firstOrNull { it.name == coreID.libretroFileName }
+        return candidateLibraryNames(coreID)
+            .asSequence()
+            .mapNotNull { libraryName ->
+                files
+                    .flatMap { it.walkBottomUp() }
+                    .firstOrNull { it.name == libraryName }
+            }
+            .firstOrNull()
+    }
+
+    private fun candidateLibraryNames(coreID: CoreID): List<String> {
+        if (Build.MODEL == PS202_MODEL && coreID == CoreID.SNES9X) {
+            return listOf(PS202_SNES_LIBRARY, coreID.libretroFileName)
+        }
+
+        return listOf(coreID.libretroFileName)
     }
 
     @Suppress("ArrayInDataClass")

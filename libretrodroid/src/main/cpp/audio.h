@@ -27,6 +27,11 @@
 
 namespace libretrodroid {
 
+enum class DeviceAudioProfile : int {
+    DEFAULT = 0,
+    PS202 = 1
+};
+
 class Audio: public oboe::AudioStreamDataCallback, oboe::AudioStreamErrorCallback {
 private:
     struct AudioLatencySettings {
@@ -36,10 +41,17 @@ private:
 
     const AudioLatencySettings DEFAULT_LATENCY_SETTINGS { 8, false };
     const AudioLatencySettings LOW_LATENCY_SETTINGS { 4, true };
-    const AudioLatencySettings OPENSL_LATENCY_SETTINGS { 12, false };
+    const AudioLatencySettings DEFAULT_OPENSL_LATENCY_SETTINGS { 12, false };
+    const AudioLatencySettings PS202_OPENSL_LATENCY_SETTINGS { 12, false };
+    const int32_t PS202_AUDIO_BLOCK_FRAMES = 2048;
 
 public:
-    Audio(int32_t sampleRate, double refreshRate, bool preferLowLatencyAudio);
+    Audio(
+        int32_t sampleRate,
+        double refreshRate,
+        bool preferLowLatencyAudio,
+        DeviceAudioProfile deviceAudioProfile
+    );
     ~Audio() = default;
 
     void start();
@@ -58,10 +70,16 @@ public:
     void setPlaybackSpeed(const double newPlaybackSpeed);
 
 private:
+    void waitForWritableAudio(size_t frames) const;
     void resetFifo();
     void startStreamIfReady();
     bool hasBufferedAudioForStart() const;
     bool usesLegacyAudioPath() const;
+    AudioLatencySettings getOpenSLESLatencySettings() const;
+    int32_t getFramesPerCallback(int32_t audioBufferSize) const;
+    double getStartThresholdFactor() const;
+    bool shouldPreferLowLatencyAudio(bool preferLowLatencyAudio) const;
+    bool usesDynamicBufferSync() const;
     static int32_t roundToEven(int32_t x);
     double computeDynamicBufferConversionFactor(double dt);
     int32_t computeAudioBufferSize();
@@ -95,6 +113,7 @@ private:
 
     double playbackSpeed = 1.0;
 
+    DeviceAudioProfile deviceAudioProfile = DeviceAudioProfile::DEFAULT;
     std::unique_ptr<AudioLatencySettings> audioLatencySettings;
 };
 
