@@ -26,6 +26,12 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
             return@withContext ThumbnailUtils.extractThumbnail(bitmap, size, size)
         }
 
+        val romRelativeFile = getRomRelativePreviewFile(game, screenshotName, coreID.coreName)
+        val romRelativeBitmap = romRelativeFile?.let { BitmapFactory.decodeFile(it.absolutePath) }
+        if (romRelativeBitmap != null) {
+            return@withContext ThumbnailUtils.extractThumbnail(romRelativeBitmap, size, size)
+        }
+
         val legacyFile = getLegacyPreviewFile(screenshotName, coreID.coreName)
         val legacyBitmap = BitmapFactory.decodeFile(legacyFile.absolutePath)
         if (legacyBitmap != null) {
@@ -42,15 +48,27 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
         index: Int
     ) = withContext(Dispatchers.IO) {
         val screenshotName = getSlotScreenshotName(game, index)
-        val file = getPreviewFile(game, screenshotName, coreID.coreName)
+        val file = getWritablePreviewFile(game, screenshotName, coreID.coreName)
         FileOutputStream(file).use {
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
         }
     }
 
     private fun getPreviewFile(game: Game, fileName: String, coreName: String): File {
-        val statesDirectories = File(getGameStatesPreviewDirectory(game), coreName)
+        val statesDirectories = File(getWritableGameStatesPreviewDirectory(game), coreName)
         statesDirectories.mkdirs()
+        return File(statesDirectories, fileName)
+    }
+
+    private fun getWritablePreviewFile(game: Game, fileName: String, coreName: String): File {
+        val statesDirectories = File(getWritableGameStatesPreviewDirectory(game), coreName)
+        statesDirectories.mkdirs()
+        return File(statesDirectories, fileName)
+    }
+
+    private fun getRomRelativePreviewFile(game: Game, fileName: String, coreName: String): File? {
+        val romRelativePreviewDirectory = getRomRelativeGameStatesPreviewDirectory(game) ?: return null
+        val statesDirectories = File(romRelativePreviewDirectory, coreName)
         return File(statesDirectories, fileName)
     }
 
@@ -60,10 +78,15 @@ class StatesPreviewManager(private val directoriesManager: DirectoriesManager) {
         return File(statesDirectories, fileName)
     }
 
-    private fun getGameStatesPreviewDirectory(game: Game): File {
-        return File(directoriesManager.getGameSavesDirectory(game), "state-previews").apply {
+    private fun getWritableGameStatesPreviewDirectory(game: Game): File {
+        return File(directoriesManager.getWritableGameSavesDirectory(game), "state-previews").apply {
             mkdirs()
         }
+    }
+
+    private fun getRomRelativeGameStatesPreviewDirectory(game: Game): File? {
+        val romRelativeSavesDirectory = directoriesManager.getRomRelativeGameSavesDirectory(game) ?: return null
+        return File(romRelativeSavesDirectory, "state-previews")
     }
 
     private fun getSlotScreenshotName(

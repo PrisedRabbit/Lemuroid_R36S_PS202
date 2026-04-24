@@ -49,4 +49,31 @@ class DirectoriesManager(private val appContext: Context) {
         val romPath = Uri.parse(game.fileUri).path ?: return null
         return File(romPath).parentFile
     }
+
+    fun getRomRelativeGameSavesDirectory(game: Game): File? {
+        val romDirectory = getRomDirectory(game) ?: return null
+        return File(romDirectory, "saves")
+    }
+
+    fun getWritableGameSavesDirectory(game: Game): File {
+        val romRelativeDirectory = getRomRelativeGameSavesDirectory(game)
+        if (romRelativeDirectory != null && ensureDirectoryWritable(romRelativeDirectory)) {
+            return romRelativeDirectory
+        }
+
+        return getSavesDirectory()
+    }
+
+    private fun ensureDirectoryWritable(directory: File): Boolean {
+        if (directory.exists()) {
+            return directory.isDirectory && directory.canWrite()
+        }
+
+        val parentDirectory = directory.parentFile ?: return false
+        if (!parentDirectory.exists() || !parentDirectory.canWrite()) {
+            return false
+        }
+
+        return directory.mkdirs() && directory.canWrite()
+    }
 }

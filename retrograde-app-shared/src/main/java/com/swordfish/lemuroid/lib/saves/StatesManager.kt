@@ -39,21 +39,8 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         game: Game,
         coreID: CoreID
     ): SaveInfo = withContext(Dispatchers.IO) {
-        val autoSaveFile = getStateFile(game, getAutoSaveFileName(game), coreID.coreName)
-        if (autoSaveFile.exists() && autoSaveFile.length() > 0) {
-            SaveInfo(true, autoSaveFile.lastModified())
-        } else {
-            val legacyAutoSaveFile = getLegacyStateFile(getAutoSaveFileName(game), coreID.coreName)
-            if (legacyAutoSaveFile.exists() && legacyAutoSaveFile.length() > 0) {
-                SaveInfo(true, legacyAutoSaveFile.lastModified())
-            } else {
-                val deprecatedAutoSaveFile = getDeprecatedStateFile(getAutoSaveFileName(game))
-                SaveInfo(
-                    deprecatedAutoSaveFile.exists() && deprecatedAutoSaveFile.length() > 0,
-                    deprecatedAutoSaveFile.lastModified()
-                )
-            }
-        }
+        val autoSaveFile = getStateFileOrDeprecated(game, getAutoSaveFileName(game), coreID.coreName)
+        SaveInfo(autoSaveFile.exists() && autoSaveFile.length() > 0, autoSaveFile.lastModified())
     }
 
     suspend fun getAutoSave(game: Game, coreID: CoreID) = withContext(Dispatchers.IO) {
@@ -129,26 +116,37 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         coreName: String,
         stateArray: ByteArray
     ) {
-        val saveFile = getStateFile(game, fileName, coreName)
+        val saveFile = getWritableStateFile(game, fileName, coreName)
         saveFile.writeBytesCompressed(stateArray)
     }
 
     private fun getStateFileOrDeprecated(game: Game, fileName: String, coreName: String): File {
-        val stateFile = getStateFile(game, fileName, coreName)
+        val stateFile = getWritableStateFile(game, fileName, coreName)
+        val romRelativeStateFile = getRomRelativeStateFile(game, fileName, coreName)
         val legacyStateFile = getLegacyStateFile(fileName, coreName)
         val deprecatedStateFile = getDeprecatedStateFile(fileName)
-        return if (stateFile.exists() || (!legacyStateFile.exists() && !deprecatedStateFile.exists())) {
+        return if (stateFile.exists()) {
             stateFile
+        } else if (romRelativeStateFile?.exists() == true) {
+            romRelativeStateFile
         } else if (legacyStateFile.exists()) {
             legacyStateFile
-        } else {
+        } else if (deprecatedStateFile.exists()) {
             deprecatedStateFile
+        } else {
+            stateFile
         }
     }
 
-    private fun getStateFile(game: Game, fileName: String, coreName: String): File {
-        val statesDirectories = File(getGameStatesDirectory(game), coreName)
+    private fun getWritableStateFile(game: Game, fileName: String, coreName: String): File {
+        val statesDirectories = File(getWritableGameStatesDirectory(game), coreName)
         statesDirectories.mkdirs()
+        return File(statesDirectories, fileName)
+    }
+
+    private fun getRomRelativeStateFile(game: Game, fileName: String, coreName: String): File? {
+        val romRelativeStatesDirectory = getRomRelativeGameStatesDirectory(game) ?: return null
+        val statesDirectories = File(romRelativeStatesDirectory, coreName)
         return File(statesDirectories, fileName)
     }
 
@@ -157,7 +155,7 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         stateFileName: String,
         coreName: String
     ): File {
-        val statesDirectories = File(getGameStatesDirectory(game), coreName)
+        val statesDirectories = File(getWritableGameStatesDirectory(game), coreName)
         statesDirectories.mkdirs()
         return File(statesDirectories, "$stateFileName.metadata")
     }
@@ -174,10 +172,15 @@ class StatesManager(private val directoriesManager: DirectoriesManager) {
         return File(statesDirectories, fileName)
     }
 
-    private fun getGameStatesDirectory(game: Game): File {
-        return File(directoriesManager.getGameSavesDirectory(game), "states").apply {
+    private fun getWritableGameStatesDirectory(game: Game): File {
+        return File(directoriesManager.getWritableGameSavesDirectory(game), "states").apply {
             mkdirs()
         }
+    }
+
+    private fun getRomRelativeGameStatesDirectory(game: Game): File? {
+        val romRelativeSavesDirectory = directoriesManager.getRomRelativeGameSavesDirectory(game) ?: return null
+        return File(romRelativeSavesDirectory, "states")
     }
 
     private fun getAutoSaveFileName(game: Game) = "${game.fileName}.state"
