@@ -1,5 +1,23 @@
 # Lemuroid
 
+## This Fork
+
+This fork adapts Lemuroid for old Android 4.4 handhelds / TV boxes based on `PS202` / `R36S`-style hardware.
+
+![PS202 / R36S device](docs/ps202-r36s.jpg)
+
+Main changes in this fork:
+- audio path tuned for weak KitKat devices and `PS202`
+- stable `OpenSLES + 44100 + 2048` audio behavior for cleaner sound
+- raw display filter option without hidden smoothing
+- KitKat compatibility fixes for storage and ABI handling
+- storage picker fixes for broken root/subfolder detection on old firmware
+- better search logic for games by title and file name
+- `PS202`-specific UX cleanup, including hiding the pointless `Gamepad detected...` toast
+- quick favorite toggle from focused game cards with the `Select` button
+
+This is not an upstream-neutral fork. It is a hardware-targeted fork for cheap legacy devices that need extra compatibility work.
+
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/com.swordfish.lemuroid/)

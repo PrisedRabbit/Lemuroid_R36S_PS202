@@ -3,6 +3,7 @@ package com.swordfish.lemuroid.app.shared.game
 import android.app.Activity
 import android.content.Intent
 import android.graphics.PointF
+import android.os.Build
 import android.os.Bundle
 import android.view.Gravity
 import android.view.InputDevice
@@ -505,7 +506,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
         inputDeviceManager.getInputMenuShortCutObservable()
             .distinctUntilChanged()
             .safeCollect { shortcut ->
-                shortcut?.let {
+                shortcut?.takeUnless { Build.MODEL == "PS202" }?.let {
                     displayToast(
                         resources.getString(R.string.game_toast_settings_button_using_gamepad, it.name)
                     )

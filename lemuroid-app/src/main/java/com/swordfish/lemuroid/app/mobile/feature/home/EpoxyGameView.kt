@@ -1,5 +1,6 @@
 package com.swordfish.lemuroid.app.mobile.feature.home
 
+import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -33,6 +34,14 @@ abstract class EpoxyGameView : EpoxyModelWithHolder<EpoxyGameView.Holder>() {
         coverLoader.loadCover(game, holder.coverView)
 
         holder.itemView?.setOnClickListener { gameInteractor.onGamePlay(game) }
+        holder.itemView?.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT && event.action == KeyEvent.ACTION_DOWN) {
+                gameInteractor.onFavoriteToggle(game, !game.isFavorite)
+                return@setOnKeyListener true
+            }
+
+            false
+        }
         holder.itemView?.setOnFocusChangeListener { view, hasFocus ->
             view.isActivated = hasFocus
         }
@@ -43,6 +52,7 @@ abstract class EpoxyGameView : EpoxyModelWithHolder<EpoxyGameView.Holder>() {
 
     override fun unbind(holder: Holder) {
         holder.itemView?.setOnClickListener(null)
+        holder.itemView?.setOnKeyListener(null)
         holder.itemView?.onFocusChangeListener = null
         holder.itemView?.isActivated = false
         holder.coverView?.apply {

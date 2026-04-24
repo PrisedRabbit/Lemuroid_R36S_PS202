@@ -1,6 +1,7 @@
 package com.swordfish.lemuroid.app.mobile.shared
 
 import android.view.LayoutInflater
+import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -36,6 +37,14 @@ class GameViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
         coverLoader.loadCover(game, coverView)
 
         itemView.setOnClickListener { gameInteractor.onGamePlay(game) }
+        itemView.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT && event.action == KeyEvent.ACTION_DOWN) {
+                favoriteToggle?.isChecked = !game.isFavorite
+                return@setOnKeyListener true
+            }
+
+            false
+        }
         itemView.setOnCreateContextMenuListener(GameContextMenuListener(gameInteractor, game))
         itemView.setOnFocusChangeListener { view, hasFocus ->
             view.isActivated = hasFocus
@@ -52,6 +61,7 @@ class GameViewHolder(parent: View) : RecyclerView.ViewHolder(parent) {
             this.setImageDrawable(null)
         }
         itemView.setOnClickListener(null)
+        itemView.setOnKeyListener(null)
         itemView.onFocusChangeListener = null
         itemView.isActivated = false
         favoriteToggle?.setOnCheckedChangeListener(null)
